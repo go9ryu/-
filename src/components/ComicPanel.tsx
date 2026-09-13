@@ -1,1251 +1,1740 @@
-import { Panel } from '../types'
-
 /* =========================================================
- * Types
- * ======================================================= */
+   Comic Panel
+   ========================================================= */
 
-type Props = {
-  panel: Panel
-  subtitle: string
-  active?: boolean
-  compact?: boolean
-  onClick?: () => void
+.comic-panel {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 24px;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-type SceneKind =
-  | 'farm'
-  | 'sea'
-  | 'forest'
-  | 'school'
-  | 'home'
-  | 'city'
-  | 'garden'
-  | 'castle'
-  | 'space'
-  | 'cave'
-  | 'hospital'
-  | 'market'
-  | 'winter'
-  | 'book'
-
-type Character =
-  | 'girl'
-  | 'boy'
-  | 'mother'
-  | 'father'
-  | 'grandmother'
-  | 'grandfather'
-  | 'teacher'
-  | 'doctor'
-  | 'knight'
-  | 'king'
-  | 'queen'
-  | 'wizard'
-
-type Animal =
-  | 'cat'
-  | 'dog'
-  | 'rabbit'
-  | 'fox'
-  | 'bear'
-  | 'panda'
-  | 'lion'
-  | 'tiger'
-  | 'elephant'
-  | 'giraffe'
-  | 'monkey'
-  | 'frog'
-  | 'penguin'
-  | 'owl'
-  | 'deer'
-  | 'wolf'
-  | 'squirrel'
-  | 'hedgehog'
-  | 'cow'
-  | 'pig'
-  | 'sheep'
-  | 'chicken'
-  | 'horse'
-  | 'duck'
-
-type Action =
-  | 'read'
-  | 'run'
-  | 'look'
-  | 'sit'
-  | 'walk'
-  | 'give'
-  | 'hide'
-  | 'sleep'
-  | 'point'
-  | 'carry'
-  | 'fight'
-  | 'dance'
-
-type Mood =
-  | 'happy'
-  | 'sad'
-  | 'surprised'
-  | 'brave'
-  | 'angry'
-  | 'normal'
-
-type TimeOfDay =
-  | 'morning'
-  | 'day'
-  | 'sunset'
-  | 'night'
-
-type Weather =
-  | 'clear'
-  | 'rain'
-  | 'snow'
-  | 'wind'
-  | 'cloudy'
-
-type Direction = 'left' | 'center' | 'right'
-
-type StoryCharacter = {
-  character: Character
-  action: Action
-  mood: Mood
-  side: Direction
+.comic-panel:hover {
+  transform: translateY(-4px);
 }
 
-type StoryAnimal = {
-  animal: Animal
-  side: Direction
-  action: Action
-}
-
-type StoryObject = {
-  type: string
-  icon: string
-  side?: Direction
+.comic-panel.is-active {
+  transform: translateY(-3px);
 }
 
 /* =========================================================
- * Generic keyword helpers
- * ======================================================= */
+   Panel label
+   ========================================================= */
 
-const has = (text: string, pattern: RegExp) =>
-  pattern.test(text)
+.panel-label {
+  display: block;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5c6470;
+}
 
-const hasAny = (
-  text: string,
-  keywords: string[],
-) =>
-  keywords.some(keyword =>
-    text.includes(keyword),
-  )
-
-const firstMatch = <T,>(
-  text: string,
-  rules: Array<[T, RegExp]>,
-): T | undefined => {
-  return rules.find(([, pattern]) =>
-    pattern.test(text),
-  )?.[0]
+.panel-label strong {
+  font-weight: 800;
+  color: #303744;
 }
 
 /* =========================================================
- * Scene
- * ======================================================= */
+   Scene
+   ========================================================= */
 
-const SCENE_RULES: Array<
-  [SceneKind, RegExp]
-> = [
-  [
-    'farm',
-    /농장|농촌|헛간|목장|축사|농부|가축|논|밭/,
-  ],
-  [
-    'castle',
-    /성|궁전|왕국|왕자|공주|기사|왕|여왕|마법/,
-  ],
-  [
-    'space',
-    /우주|로켓|행성|달나라|은하|우주선|외계/,
-  ],
-  [
-    'hospital',
-    /병원|의사|간호사|환자|진료|응급실/,
-  ],
-  [
-    'market',
-    /시장|가게|마트|상점|빵집|식당|카페|편의점/,
-  ],
-  [
-    'cave',
-    /동굴|광산|터널|지하|비밀방|보물동굴/,
-  ],
-  [
-    'winter',
-    /겨울|눈밭|스키|얼음|빙판|눈사람|눈보라/,
-  ],
-  [
-    'sea',
-    /바다|해변|파도|강|호수|항구|섬|수영|해수욕장/,
-  ],
-  [
-    'school',
-    /학교|교실|도서관|운동장|학생|유치원|학원/,
-  ],
-  [
-    'home',
-    /집|방|거실|부엌|침대|마당|창문|가족|아파트/,
-  ],
-  [
-    'city',
-    /도시|거리|골목|역|버스|자동차|신호등|빌딩|횡단보도/,
-  ],
-  [
-    'garden',
-    /정원|꽃밭|화단|꽃|나비|장미|튤립/,
-  ],
-  [
-    'forest',
-    /숲|숲길|나무|풀|산|언덕|캠핑|계곡|등산/,
-  ],
-]
+.scene {
+  position: relative;
+  width: 100%;
+  min-height: 300px;
+  overflow: hidden;
+  isolation: isolate;
 
-function getSceneKind(
-  text: string,
-): SceneKind {
-  return (
-    firstMatch(text, SCENE_RULES) ??
-    'book'
-  )
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #dff3ff 0%,
+      #edf9ff 48%,
+      #d9f0d0 100%
+    );
+
+  box-shadow:
+    0 12px 30px rgba(35, 45, 60, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+}
+
+.comic-panel.compact .scene {
+  min-height: 220px;
 }
 
 /* =========================================================
- * Time
- * ======================================================= */
+   Scene background base
+   ========================================================= */
 
-const TIME_RULES: Array<
-  [TimeOfDay, RegExp]
-> = [
-  ['night', /밤|한밤중|어두운|달빛/],
-  ['morning', /아침|새벽|해돋이|동이 틀/],
-  ['sunset', /노을|해질|저녁|해질녘/],
-]
-
-function getTimeOfDay(
-  text: string,
-): TimeOfDay {
-  return (
-    firstMatch(text, TIME_RULES) ??
-    'day'
-  )
+.scene-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
 }
 
 /* =========================================================
- * Weather
- * ======================================================= */
+   Atmosphere
+   ========================================================= */
 
-const WEATHER_RULES: Array<
-  [Weather, RegExp]
-> = [
-  ['rain', /비|빗물|장마|폭우|소나기|폭풍/],
-  ['snow', /눈|눈송이|눈보라|함박눈/],
-  ['wind', /바람|강풍|흩날|날아가/],
-  ['cloudy', /구름|흐린|흐림|먹구름/],
-]
+.scene-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
 
-function getWeather(
-  text: string,
-): Weather {
-  return (
-    firstMatch(text, WEATHER_RULES) ??
-    'clear'
-  )
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2),
+      transparent 45%
+    );
+}
+
+.scene-atmosphere.time-night {
+  background:
+    linear-gradient(
+      180deg,
+      #17244e 0%,
+      #263b70 55%,
+      #5b7191 100%
+    );
+}
+
+.scene-atmosphere.time-sunset {
+  background:
+    linear-gradient(
+      180deg,
+      #ffb36b 0%,
+      #ffd08b 40%,
+      #d9a27d 100%
+    );
+}
+
+.scene-atmosphere.time-morning {
+  background:
+    linear-gradient(
+      180deg,
+      #c9ecff 0%,
+      #f8f2cc 55%,
+      #d5eac7 100%
+    );
+}
+
+.scene-atmosphere.weather-cloudy {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(150, 164, 182, 0.42),
+      rgba(220, 230, 235, 0.1)
+    );
+}
+
+.scene-atmosphere.weather-rain {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(92, 116, 142, 0.4),
+      rgba(125, 158, 171, 0.15)
+    );
+}
+
+.scene-atmosphere.weather-snow {
+  background:
+    linear-gradient(
+      180deg,
+      #dcecf8 0%,
+      #edf7ff 60%,
+      #ffffff 100%
+    );
 }
 
 /* =========================================================
- * Characters
- * ======================================================= */
+   Sky objects
+   ========================================================= */
 
-const CHARACTER_RULES: Array<
-  [Character, RegExp]
-> = [
-  ['grandmother', /할머니|외할머니/],
-  ['grandfather', /할아버지|외할아버지/],
-  ['mother', /엄마|어머니|어머님/],
-  ['father', /아빠|아버지|아버님/],
-  ['teacher', /선생님|교사|담임/],
-  ['doctor', /의사|의료진/],
-  ['knight', /기사|전사|용사/],
-  ['king', /왕|국왕/],
-  ['queen', /여왕|왕비/],
-  ['wizard', /마법사|현자|마녀/],
-  ['girl', /소녀|여자아이|여자 아이|그녀|공주|딸/],
-  ['boy', /소년|남자아이|남자 아이|그|왕자|아들/],
-]
+.story-moon {
+  position: absolute;
+  top: 26px;
+  right: 46px;
+  font-size: 44px;
+  filter: drop-shadow(0 5px 10px rgba(255, 255, 255, 0.2));
+  animation: moonFloat 5s ease-in-out infinite;
+}
 
-function detectCharacters(
-  text: string,
-): Character[] {
-  const result: Character[] = []
+.story-stars {
+  position: absolute;
+  top: 25px;
+  left: 40px;
+  font-size: 17px;
+  letter-spacing: 18px;
+  opacity: 0.9;
+  animation: twinkle 2.8s ease-in-out infinite;
+}
 
-  for (const [character, pattern] of CHARACTER_RULES) {
-    if (pattern.test(text)) {
-      result.push(character)
-    }
+.story-sun {
+  position: absolute;
+  top: 25px;
+  right: 42px;
+  font-size: 52px;
+  filter: drop-shadow(0 8px 15px rgba(255, 193, 7, 0.25));
+}
+
+.story-sunset {
+  position: absolute;
+  top: 24px;
+  right: 40px;
+  font-size: 48px;
+}
+
+.story-cloud {
+  position: absolute;
+  top: 30px;
+  left: 35px;
+  font-size: 30px;
+  opacity: 0.65;
+  animation: cloudMove 9s linear infinite;
+}
+
+.story-rain {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 24px;
+  font-size: 36px;
+  opacity: 0.65;
+  animation: rainFloat 2s ease-in-out infinite;
+}
+
+.story-snow {
+  position: absolute;
+  inset: 0;
+  padding: 20px;
+  font-size: 25px;
+  line-height: 2.5;
+  letter-spacing: 25px;
+  opacity: 0.8;
+  animation: snowFall 5s linear infinite;
+}
+
+.story-wind {
+  position: absolute;
+  top: 90px;
+  left: 20px;
+  font-size: 32px;
+  animation: windMove 2.5s ease-in-out infinite;
+}
+
+/* =========================================================
+   General background elements
+   ========================================================= */
+
+.story-tree {
+  position: absolute;
+  z-index: 1;
+  bottom: 55px;
+  font-style: normal;
+  font-size: 88px;
+  filter: drop-shadow(0 10px 8px rgba(40, 70, 40, 0.18));
+}
+
+.story-tree.left {
+  left: 14px;
+}
+
+.story-tree.center {
+  left: 43%;
+  bottom: 85px;
+  font-size: 66px;
+  opacity: 0.8;
+}
+
+.story-tree.right {
+  right: 12px;
+}
+
+.story-path {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -30px;
+  height: 130px;
+  border-radius: 50% 50% 0 0;
+  background: #d6b88a;
+  transform: perspective(200px) rotateX(15deg);
+  opacity: 0.75;
+}
+
+/* =========================================================
+   Garden
+   ========================================================= */
+
+.story-flowerbed {
+  position: absolute;
+  bottom: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32px;
+  white-space: nowrap;
+  z-index: 3;
+  animation: gentleFloat 4s ease-in-out infinite;
+}
+
+/* =========================================================
+   Sea
+   ========================================================= */
+
+.scene-sea {
+  background:
+    linear-gradient(
+      180deg,
+      #9ee5ff 0%,
+      #d6f5ff 42%,
+      #4ebbd6 43%,
+      #75d2df 100%
+    );
+}
+
+.story-island {
+  position: absolute;
+  right: 25px;
+  bottom: 68px;
+  font-size: 72px;
+  font-style: normal;
+}
+
+.story-waves {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  font-size: 42px;
+  white-space: nowrap;
+  letter-spacing: 7px;
+  animation: waveMove 3s ease-in-out infinite;
+}
+
+.story-boat {
+  position: absolute;
+  right: 32%;
+  bottom: 85px;
+  z-index: 4;
+  font-size: 48px;
+  animation: boatMove 4s ease-in-out infinite;
+}
+
+/* =========================================================
+   School
+   ========================================================= */
+
+.story-school {
+  position: absolute;
+  left: 50%;
+  bottom: 52px;
+  transform: translateX(-50%);
+  font-style: normal;
+  font-size: 120px;
+  z-index: 2;
+}
+
+.story-ground {
+  position: absolute;
+  left: -5%;
+  right: -5%;
+  bottom: 0;
+  height: 75px;
+  background: #93c86e;
+  border-radius: 50% 50% 0 0;
+}
+
+/* =========================================================
+   Home
+   ========================================================= */
+
+.story-home {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  transform: translateX(-50%);
+  font-size: 125px;
+  font-style: normal;
+  z-index: 2;
+}
+
+.story-window {
+  position: absolute;
+  left: 50%;
+  top: 80px;
+  transform: translateX(-50%);
+  font-size: 34px;
+  z-index: 3;
+}
+
+/* =========================================================
+   City
+   ========================================================= */
+
+.story-city {
+  position: absolute;
+  left: 50%;
+  bottom: 58px;
+  transform: translateX(-50%);
+  font-size: 64px;
+  white-space: nowrap;
+  letter-spacing: 8px;
+  z-index: 2;
+}
+
+.story-crosswalk {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 22px,
+      rgba(255, 255, 255, 0.85) 22px 35px
+    );
+  opacity: 0.65;
+}
+
+.story-city-car {
+  position: absolute;
+  bottom: 32px;
+  left: 15%;
+  z-index: 5;
+  font-size: 40px;
+  animation: carMove 7s linear infinite;
+}
+
+/* =========================================================
+   Castle
+   ========================================================= */
+
+.story-castle {
+  position: absolute;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  font-size: 130px;
+  font-style: normal;
+  z-index: 2;
+}
+
+.story-castle-flag {
+  position: absolute;
+  left: 50%;
+  top: 75px;
+  transform: translateX(-50%);
+  font-size: 27px;
+  z-index: 3;
+}
+
+/* =========================================================
+   Space
+   ========================================================= */
+
+.scene-space {
+  background:
+    radial-gradient(
+      circle at 25% 25%,
+      rgba(255, 255, 255, 0.18) 0 2px,
+      transparent 3px
+    ),
+    radial-gradient(
+      circle at 70% 40%,
+      rgba(255, 255, 255, 0.2) 0 2px,
+      transparent 3px
+    ),
+    linear-gradient(
+      180deg,
+      #11173c,
+      #252a66 65%,
+      #171936
+    );
+}
+
+.story-planet {
+  position: absolute;
+  right: 25px;
+  top: 45px;
+  font-size: 85px;
+  font-style: normal;
+  animation: planetFloat 7s ease-in-out infinite;
+}
+
+.story-rocket {
+  position: absolute;
+  left: 22%;
+  top: 85px;
+  font-size: 48px;
+  transform: rotate(-20deg);
+  animation: rocketFloat 4s ease-in-out infinite;
+}
+
+.story-space-star {
+  position: absolute;
+  left: 12%;
+  top: 25px;
+  font-size: 23px;
+  letter-spacing: 20px;
+}
+
+/* =========================================================
+   Cave
+   ========================================================= */
+
+.scene-cave {
+  background:
+    radial-gradient(
+      ellipse at center top,
+      #59606b,
+      #262c34 70%,
+      #16191e
+    );
+}
+
+.story-cave {
+  position: absolute;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  font-size: 150px;
+  font-style: normal;
+  opacity: 0.9;
+}
+
+.story-crystals {
+  position: absolute;
+  bottom: 40px;
+  right: 18%;
+  font-size: 30px;
+  animation: crystalGlow 2s ease-in-out infinite;
+}
+
+/* =========================================================
+   Hospital
+   ========================================================= */
+
+.story-hospital {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  transform: translateX(-50%);
+  font-size: 120px;
+  font-style: normal;
+}
+
+/* =========================================================
+   Market
+   ========================================================= */
+
+.story-shop {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  transform: translateX(-50%);
+  font-size: 115px;
+  font-style: normal;
+}
+
+.story-awning {
+  position: absolute;
+  left: 50%;
+  bottom: 125px;
+  transform: translateX(-50%);
+  font-size: 34px;
+}
+
+/* =========================================================
+   Winter
+   ========================================================= */
+
+.scene-winter {
+  background:
+    linear-gradient(
+      180deg,
+      #bce4ff,
+      #eaf8ff 60%,
+      #ffffff
+    );
+}
+
+.story-snowman {
+  position: absolute;
+  left: 20%;
+  bottom: 48px;
+  font-size: 72px;
+}
+
+.story-pine {
+  position: absolute;
+  right: 18%;
+  bottom: 55px;
+  font-size: 90px;
+  font-style: normal;
+}
+
+.story-pine.second {
+  right: 4%;
+  font-size: 65px;
+}
+
+/* =========================================================
+   Book / indoor
+   ========================================================= */
+
+.story-shelf {
+  position: absolute;
+  left: 14%;
+  bottom: 45px;
+  font-size: 80px;
+  font-style: normal;
+}
+
+.story-table {
+  position: absolute;
+  right: 15%;
+  bottom: 35px;
+  font-size: 72px;
+  font-style: normal;
+}
+
+/* =========================================================
+   Mountain / rainbow
+   ========================================================= */
+
+.story-mountain {
+  position: absolute;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  font-size: 115px;
+  z-index: 2;
+}
+
+.story-rainbow {
+  position: absolute;
+  left: 50%;
+  top: 25px;
+  transform: translateX(-50%);
+  font-size: 65px;
+  opacity: 0.85;
+  z-index: 2;
+}
+
+/* =========================================================
+   Character layer
+   ========================================================= */
+
+.scene-character-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* =========================================================
+   Person
+   ========================================================= */
+
+.story-person {
+  position: absolute;
+  bottom: 50px;
+  width: 110px;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+.story-person:hover {
+  transform: translateY(-5px) scale(1.03);
+}
+
+.story-person.side-left {
+  left: 10%;
+}
+
+.story-person.side-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.story-person.side-right {
+  right: 10%;
+}
+
+/* =========================================================
+   Character emoji
+   ========================================================= */
+
+.person-character-icon {
+  position: relative;
+  z-index: 4;
+  display: block;
+  font-size: 78px;
+  line-height: 1;
+  filter:
+    drop-shadow(0 5px 4px rgba(0, 0, 0, 0.12));
+  animation: characterIdle 3.5s ease-in-out infinite;
+}
+
+/* =========================================================
+   Old CSS character compatibility
+   ========================================================= */
+
+.person-avatar {
+  display: none;
+}
+
+/* =========================================================
+   Character types
+   ========================================================= */
+
+.character-girl .person-character-icon {
+  filter:
+    drop-shadow(0 5px 5px rgba(255, 120, 170, 0.18));
+}
+
+.character-boy .person-character-icon {
+  filter:
+    drop-shadow(0 5px 5px rgba(80, 130, 220, 0.18));
+}
+
+.character-mother .person-character-icon,
+.character-father .person-character-icon {
+  font-size: 82px;
+}
+
+.character-grandmother .person-character-icon,
+.character-grandfather .person-character-icon {
+  font-size: 82px;
+}
+
+.character-teacher .person-character-icon,
+.character-doctor .person-character-icon {
+  font-size: 82px;
+}
+
+.character-knight .person-character-icon {
+  font-size: 88px;
+}
+
+.character-king .person-character-icon,
+.character-queen .person-character-icon {
+  font-size: 88px;
+}
+
+.character-wizard .person-character-icon {
+  font-size: 88px;
+}
+
+/* =========================================================
+   Character actions
+   ========================================================= */
+
+.action-run .person-character-icon {
+  animation: characterRun 0.65s ease-in-out infinite;
+}
+
+.action-walk .person-character-icon {
+  animation: characterWalk 1.5s ease-in-out infinite;
+}
+
+.action-look .person-character-icon {
+  transform: rotate(-3deg);
+}
+
+.action-sit {
+  bottom: 35px;
+}
+
+.action-sit .person-character-icon {
+  transform: translateY(18px) scale(0.9);
+}
+
+.action-sleep .person-character-icon {
+  transform: rotate(3deg);
+}
+
+.action-carry .person-character-icon {
+  transform: translateY(-3px);
+}
+
+.action-fight .person-character-icon {
+  animation: braveMove 0.8s ease-in-out infinite;
+}
+
+.action-dance .person-character-icon {
+  animation: danceMove 0.7s ease-in-out infinite;
+}
+
+.action-cry .person-character-icon {
+  animation: sadMove 2s ease-in-out infinite;
+}
+
+.action-hide .person-character-icon {
+  transform: scale(0.85);
+}
+
+/* =========================================================
+   Mood
+   ========================================================= */
+
+.person-mood-badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  z-index: 8;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+
+  font-size: 19px;
+
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  animation: badgeFloat 2s ease-in-out infinite;
+}
+
+.mood-happy .person-character-icon {
+  filter:
+    drop-shadow(0 5px 5px rgba(255, 196, 70, 0.25));
+}
+
+.mood-sad .person-character-icon {
+  filter:
+    saturate(0.8)
+    drop-shadow(0 5px 5px rgba(80, 130, 190, 0.18));
+}
+
+.mood-angry .person-character-icon {
+  animation: angryMove 0.45s ease-in-out infinite;
+}
+
+.mood-brave .person-character-icon {
+  filter:
+    drop-shadow(0 7px 8px rgba(255, 130, 50, 0.22));
+}
+
+/* =========================================================
+   Animal layer
+   ========================================================= */
+
+.scene-animal-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+/* =========================================================
+   Animals
+   ========================================================= */
+
+.story-animal {
+  position: absolute;
+  bottom: 48px;
+
+  display: block;
+
+  font-size: 55px;
+  line-height: 1;
+
+  filter:
+    drop-shadow(0 6px 5px rgba(0, 0, 0, 0.13));
+
+  animation: animalIdle 3s ease-in-out infinite;
+}
+
+/* Position */
+
+.animal-side-left {
+  left: 27%;
+}
+
+.animal-side-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.animal-side-right {
+  right: 24%;
+}
+
+/* Size variations */
+
+.animal-elephant {
+  font-size: 70px;
+}
+
+.animal-giraffe {
+  font-size: 70px;
+}
+
+.animal-bear,
+.animal-lion,
+.animal-tiger {
+  font-size: 65px;
+}
+
+.animal-rabbit,
+.animal-squirrel,
+.animal-hedgehog {
+  font-size: 50px;
+}
+
+.animal-chicken,
+.animal-duck,
+.animal-frog {
+  font-size: 45px;
+}
+
+/* Animal actions */
+
+.animal-action-run {
+  animation:
+    animalRun 0.55s ease-in-out infinite;
+}
+
+.animal-action-walk {
+  animation:
+    animalWalk 1.2s ease-in-out infinite;
+}
+
+.animal-action-sleep {
+  transform: rotate(8deg);
+}
+
+.animal-action-fight {
+  animation:
+    animalFight 0.6s ease-in-out infinite;
+}
+
+.animal-action-dance {
+  animation:
+    animalDance 0.7s ease-in-out infinite;
+}
+
+/* =========================================================
+   Object layer
+   ========================================================= */
+
+.scene-object-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 16;
+  pointer-events: none;
+}
+
+.story-item {
+  position: absolute;
+  display: block;
+
+  font-size: 38px;
+  line-height: 1;
+
+  filter:
+    drop-shadow(0 5px 5px rgba(0, 0, 0, 0.12));
+
+  animation: objectFloat 3s ease-in-out infinite;
+}
+
+/* =========================================================
+   Object positioning
+   ========================================================= */
+
+.object-side-left {
+  left: 20%;
+  bottom: 125px;
+}
+
+.object-side-center {
+  left: 50%;
+  bottom: 115px;
+  transform: translateX(-50%);
+}
+
+.object-side-right {
+  right: 20%;
+  bottom: 125px;
+}
+
+/* =========================================================
+   Object types
+   ========================================================= */
+
+.object-book {
+  font-size: 46px;
+}
+
+.object-letter {
+  font-size: 42px;
+}
+
+.object-map {
+  font-size: 43px;
+}
+
+.object-key {
+  font-size: 40px;
+}
+
+.object-treasure {
+  font-size: 48px;
+  animation:
+    treasureGlow 1.8s ease-in-out infinite;
+}
+
+.object-apple {
+  font-size: 42px;
+}
+
+.object-cake {
+  font-size: 44px;
+}
+
+.object-bread {
+  font-size: 43px;
+}
+
+.object-cookie {
+  font-size: 40px;
+}
+
+.object-icecream {
+  font-size: 43px;
+}
+
+.object-magic {
+  font-size: 45px;
+  animation:
+    magicFloat 2s ease-in-out infinite;
+}
+
+.object-fire {
+  font-size: 44px;
+  animation:
+    fireMove 0.8s ease-in-out infinite;
+}
+
+.object-gift {
+  font-size: 44px;
+  animation:
+    giftBounce 1.5s ease-in-out infinite;
+}
+
+.object-weapon {
+  font-size: 47px;
+}
+
+.object-vehicle {
+  font-size: 44px;
+}
+
+/* =========================================================
+   Speech bubble
+   ========================================================= */
+
+.speech-bubble {
+  position: relative;
+  z-index: 30;
+
+  margin: 12px 8px 0;
+  padding: 14px 17px;
+
+  min-height: 52px;
+
+  border-radius: 17px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  color: #353b45;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 600;
+
+  box-shadow:
+    0 5px 18px rgba(30, 40, 50, 0.08);
+
+  word-break: keep-all;
+}
+
+.speech-bubble::before {
+  content: '';
+
+  position: absolute;
+  top: -8px;
+  left: 35px;
+
+  width: 17px;
+  height: 17px;
+
+  background: white;
+
+  transform: rotate(45deg);
+}
+
+/* =========================================================
+   Empty scene
+   ========================================================= */
+
+.scene-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  color: #697382;
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(255,255,255,0.75),
+      rgba(255,255,255,0.2)
+    );
+}
+
+.scene-empty-icon {
+  font-size: 48px;
+  animation:
+    emptyFloat 2.5s ease-in-out infinite;
+}
+
+.scene-empty-text {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   Farm
+   ========================================================= */
+
+.farm-scene {
+  position: absolute;
+  inset: 0;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      180deg,
+      #bfe9ff 0%,
+      #e8f7ff 50%,
+      #9dd16f 51%,
+      #78b95d 100%
+    );
+}
+
+.farm-bg-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.farm-barn {
+  position: absolute;
+  left: 50%;
+  bottom: 65px;
+  transform: translateX(-50%);
+  font-size: 95px;
+  font-style: normal;
+}
+
+.farm-fence {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 40px;
+
+  font-size: 35px;
+  letter-spacing: 8px;
+
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.farm-hill {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: 0;
+  height: 90px;
+
+  border-radius: 50% 50% 0 0;
+  background: #7fbd62;
+}
+
+.farm-animal-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.farm-animal {
+  position: absolute;
+  bottom: 75px;
+  font-size: 48px;
+  animation: animalIdle 3s ease-in-out infinite;
+}
+
+.farm-animal.cow {
+  left: 15%;
+}
+
+.farm-animal.sheep {
+  right: 16%;
+}
+
+.farm-animal.hen {
+  left: 42%;
+  bottom: 58px;
+  font-size: 37px;
+}
+
+.farm-animal.pig {
+  left: 67%;
+  bottom: 63px;
+  font-size: 44px;
+}
+
+.farm-animal.horse {
+  left: 12%;
+  font-size: 58px;
+}
+
+.farm-animal.duck {
+  right: 38%;
+  bottom: 55px;
+  font-size: 37px;
+}
+
+.pig-boss {
+  left: 43%;
+  bottom: 82px;
+  font-size: 57px;
+}
+
+.farm-workers {
+  position: absolute;
+  right: 10%;
+  bottom: 78px;
+  font-size: 43px;
+}
+
+.farm-crowd {
+  position: absolute;
+  left: 50%;
+  bottom: 82px;
+  transform: translateX(-50%);
+  font-size: 45px;
+  white-space: nowrap;
+}
+
+.farm-cart {
+  position: absolute;
+  right: 18%;
+  bottom: 75px;
+  font-size: 45px;
+  font-style: normal;
+}
+
+.farm-shadow-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      transparent,
+      rgba(30, 30, 30, 0.25)
+    );
+  pointer-events: none;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .scene {
+    min-height: 250px;
+    border-radius: 18px;
   }
 
-  /*
-   * 일반적인 '아이', '주인공'은
-   * 성별을 알 수 없으므로 여자아이를 기본 캐릭터로 사용
-   */
-  if (
-    result.length === 0 &&
-    has(text, /아이|주인공|친구/)
-  ) {
-    result.push('girl')
+  .story-tree {
+    font-size: 68px;
   }
 
-  return result
+  .story-castle {
+    font-size: 95px;
+  }
+
+  .story-home {
+    font-size: 100px;
+  }
+
+  .story-school,
+  .story-hospital {
+    font-size: 90px;
+  }
+
+  .person-character-icon {
+    font-size: 62px;
+  }
+
+  .story-person {
+    width: 90px;
+    height: 125px;
+    bottom: 42px;
+  }
+
+  .story-animal {
+    font-size: 45px;
+  }
+
+  .story-item {
+    font-size: 32px;
+  }
+
+  .speech-bubble {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+}
+
+@media (max-width: 430px) {
+  .scene {
+    min-height: 220px;
+  }
+
+  .story-person.side-left {
+    left: 3%;
+  }
+
+  .story-person.side-right {
+    right: 3%;
+  }
+
+  .animal-side-left {
+    left: 20%;
+  }
+
+  .animal-side-right {
+    right: 18%;
+  }
+
+  .person-character-icon {
+    font-size: 54px;
+  }
+
+  .story-animal {
+    font-size: 38px;
+  }
+
+  .story-item {
+    font-size: 27px;
+  }
+
+  .story-castle {
+    font-size: 78px;
+  }
+
+  .story-home {
+    font-size: 82px;
+  }
+
+  .story-school,
+  .story-hospital {
+    font-size: 76px;
+  }
 }
 
 /* =========================================================
- * Actions
- * ======================================================= */
+   Animations
+   ========================================================= */
 
-const ACTION_RULES: Array<
-  [Action, RegExp]
-> = [
-  ['sleep', /잠들|잠을 자|꿈을 꾸|누워|잠자/],
-  ['dance', /춤|춤추|파티|축제|노래/],
-  ['fight', /싸우|전투|공격|물리치|맞서|싸움/],
-  ['carry', /들고|메고|옮기|상자를 들|업고/],
-  ['point', /가리키|손짓|알려|보여|설명/],
-  ['read', /읽|독서|공부|책을 보|글을 보/],
-  ['give', /주|건네|선물|나눠|전해/],
-  ['hide', /숨|몰래|숨어|피해/],
-  ['run', /달리|뛰|도망|급히|쫓|달아나/],
-  ['look', /발견|바라|찾|살펴|올려다|구경|만나/],
-  ['sit', /앉|쉬|기다|휴식/],
-]
+@keyframes characterIdle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-function getAction(
-  text: string,
-): Action {
-  return (
-    firstMatch(text, ACTION_RULES) ??
-    'walk'
-  )
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
-/* =========================================================
- * Mood
- * ======================================================= */
+@keyframes characterWalk {
+  0%,
+  100% {
+    transform: rotate(-3deg) translateY(0);
+  }
 
-const MOOD_RULES: Array<
-  [Mood, RegExp]
-> = [
-  ['angry', /화나|분노|미워|짜증|화가/],
-  [
-    'happy',
-    /기뻐|웃|축하|행복|즐거|환호|신나|기쁜/,
-  ],
-  [
-    'sad',
-    /슬프|울|외로|눈물|아쉬|걱정|속상/,
-  ],
-  [
-    'surprised',
-    /놀라|깜짝|무서|두려|위험|겁/,
-  ],
-  [
-    'brave',
-    /용기|결심|맞서|구하|이겨|당당/,
-  ],
-]
-
-function getMood(
-  text: string,
-): Mood {
-  return (
-    firstMatch(text, MOOD_RULES) ??
-    'normal'
-  )
+  50% {
+    transform: rotate(3deg) translateY(-5px);
+  }
 }
 
-/* =========================================================
- * Animals
- * ======================================================= */
+@keyframes characterRun {
+  0%,
+  100% {
+    transform: rotate(-8deg) translateY(0);
+  }
 
-const ANIMAL_RULES: Array<
-  [Animal, RegExp]
-> = [
-  ['cat', /고양이|냥이|야옹/],
-  ['dog', /강아지|개|멍멍/],
-  ['rabbit', /토끼|깡총/],
-  ['fox', /여우/],
-  ['bear', /곰|곰돌이/],
-  ['panda', /판다/],
-  ['lion', /사자/],
-  ['tiger', /호랑이/],
-  ['elephant', /코끼리/],
-  ['giraffe', /기린/],
-  ['monkey', /원숭이/],
-  ['frog', /개구리/],
-  ['penguin', /펭귄/],
-  ['owl', /부엉이|올빼미/],
-  ['deer', /사슴/],
-  ['wolf', /늑대/],
-  ['squirrel', /다람쥐/],
-  ['hedgehog', /고슴도치/],
-  ['cow', /소/],
-  ['pig', /돼지/],
-  ['sheep', /양/],
-  ['chicken', /닭|병아리/],
-  ['horse', /말/],
-  ['duck', /오리/],
-]
-
-const ANIMAL_ICONS: Record<
-  Animal,
-  string
-> = {
-  cat: '🐱',
-  dog: '🐶',
-  rabbit: '🐰',
-  fox: '🦊',
-  bear: '🐻',
-  panda: '🐼',
-  lion: '🦁',
-  tiger: '🐯',
-  elephant: '🐘',
-  giraffe: '🦒',
-  monkey: '🐵',
-  frog: '🐸',
-  penguin: '🐧',
-  owl: '🦉',
-  deer: '🦌',
-  wolf: '🐺',
-  squirrel: '🐿️',
-  hedgehog: '🦔',
-  cow: '🐄',
-  pig: '🐷',
-  sheep: '🐑',
-  chicken: '🐔',
-  horse: '🐴',
-  duck: '🦆',
+  50% {
+    transform: rotate(8deg) translateY(-8px);
+  }
 }
 
-function detectAnimals(
-  text: string,
-): Animal[] {
-  return ANIMAL_RULES
-    .filter(([, pattern]) =>
-      pattern.test(text),
-    )
-    .map(([animal]) => animal)
+@keyframes braveMove {
+  0%,
+  100% {
+    transform: translateX(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateX(5px) rotate(3deg);
+  }
 }
 
-/* =========================================================
- * Character / animal arrangement
- * ======================================================= */
+@keyframes danceMove {
+  0%,
+  100% {
+    transform: rotate(-8deg) translateY(0);
+  }
 
-function makeCharacterScenes(
-  text: string,
-): StoryCharacter[] {
-  const characters =
-    detectCharacters(text)
-
-  const action = getAction(text)
-  const mood = getMood(text)
-
-  const sides: Direction[] = [
-    'left',
-    'center',
-    'right',
-  ]
-
-  return characters
-    .slice(0, 3)
-    .map((character, index) => ({
-      character,
-      action,
-      mood,
-      side: sides[index],
-    }))
+  50% {
+    transform: rotate(8deg) translateY(-9px);
+  }
 }
 
-function makeAnimalScenes(
-  text: string,
-): StoryAnimal[] {
-  const animals =
-    detectAnimals(text)
+@keyframes sadMove {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-  const sides: Direction[] = [
-    'right',
-    'left',
-    'center',
-  ]
-
-  return animals
-    .slice(0, 3)
-    .map((animal, index) => ({
-      animal,
-      side: sides[index],
-      action: getAction(text),
-    }))
+  50% {
+    transform: translateY(4px);
+  }
 }
 
-/* =========================================================
- * Story objects
- * ======================================================= */
+@keyframes angryMove {
+  0%,
+  100% {
+    transform: translateX(-2px);
+  }
 
-const OBJECT_RULES: Array<
-  [string, RegExp, string]
-> = [
-  ['book', /책|독서|동화|일기|사전/, '📖'],
-  ['letter', /편지|쪽지|초대장|메모/, '✉️'],
-  ['map', /지도|보물지도/, '🗺️'],
-  ['key', /열쇠|자물쇠/, '🔑'],
-  ['treasure', /보물|금화|보석|다이아/, '💎'],
-  ['apple', /사과/, '🍎'],
-  ['cake', /케이크/, '🍰'],
-  ['bread', /빵/, '🍞'],
-  ['cookie', /쿠키|과자/, '🍪'],
-  ['icecream', /아이스크림/, '🍦'],
-  ['phone', /전화|휴대폰|문자|메시지/, '📱'],
-  ['crown', /왕관/, '👑'],
-  ['magic', /마법|주문|지팡이|마법진/, '🪄'],
-  ['fire', /불꽃|모닥불|용암|화재/, '🔥'],
-  ['lamp', /등불|램프|촛불|손전등/, '🏮'],
-  ['umbrella', /우산/, '☂️'],
-  ['clock', /시계|시간|약속/, '⏰'],
-  ['balloon', /풍선/, '🎈'],
-  ['music', /음악|노래|피아노|기타|연주/, '🎵'],
-  ['camera', /사진|카메라|촬영/, '📷'],
-  ['gift', /선물|리본/, '🎁'],
-  ['weapon', /칼|검|방패|활|화살/, '⚔️'],
-  ['vehicle', /자동차|버스|기차|자전거|비행기|택시/, '🚗'],
-]
-
-function detectObjects(
-  text: string,
-): StoryObject[] {
-  const objects =
-    OBJECT_RULES.filter(([, pattern]) =>
-      pattern.test(text),
-    )
-
-  const sides: Direction[] = [
-    'left',
-    'right',
-    'center',
-  ]
-
-  return objects
-    .slice(0, 5)
-    .map(
-      ([type, , icon], index) => ({
-        type,
-        icon,
-        side: sides[index % sides.length],
-      }),
-    )
+  50% {
+    transform: translateX(2px);
+  }
 }
 
-/* =========================================================
- * Character icon
- * ======================================================= */
+@keyframes animalIdle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-const CHARACTER_ICONS: Record<
-  Character,
-  string
-> = {
-  girl: '👧',
-  boy: '👦',
-  mother: '👩',
-  father: '👨',
-  grandmother: '👵',
-  grandfather: '👴',
-  teacher: '🧑‍🏫',
-  doctor: '🧑‍⚕️',
-  knight: '🛡️',
-  king: '🤴',
-  queen: '👸',
-  wizard: '🧙',
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-/* =========================================================
- * Person
- * ======================================================= */
+@keyframes animalWalk {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
 
-function Person({
-  data,
-}: {
-  data: StoryCharacter
-}) {
-  const {
-    character,
-    action,
-    mood,
-    side,
-  } = data
-
-  const moodEmoji =
-    mood === 'happy'
-      ? '✨'
-      : mood === 'sad'
-        ? '💧'
-        : mood === 'angry'
-          ? '💢'
-          : mood === 'surprised'
-            ? '❗'
-            : mood === 'brave'
-              ? '🔥'
-              : ''
-
-  return (
-    <div
-      className={[
-        'story-person',
-        `character-${character}`,
-        `action-${action}`,
-        `mood-${mood}`,
-        `side-${side}`,
-      ].join(' ')}
-    >
-      {moodEmoji && (
-        <span className="person-mood-badge">
-          {moodEmoji}
-        </span>
-      )}
-
-      <span
-        className="person-character-icon"
-        aria-hidden="true"
-      >
-        {CHARACTER_ICONS[character]}
-      </span>
-
-      <i
-        className="person-avatar"
-        aria-hidden="true"
-      >
-        <b className="person-head">
-          <b className="person-face" />
-          <b className="person-hair" />
-        </b>
-
-        <b className="person-body">
-          <b className="person-torso" />
-          <b className="person-arm left-arm" />
-          <b className="person-arm right-arm" />
-        </b>
-
-        <b className="person-legs">
-          <b className="person-leg left-leg" />
-          <b className="person-leg right-leg" />
-        </b>
-      </i>
-    </div>
-  )
+  50% {
+    transform: translateX(5px);
+  }
 }
 
-/* =========================================================
- * Animal
- * ======================================================= */
+@keyframes animalRun {
+  0%,
+  100% {
+    transform: translateX(-4px) rotate(-3deg);
+  }
 
-function AnimalSprite({
-  data,
-}: {
-  data: StoryAnimal
-}) {
-  return (
-    <span
-      className={[
-        'story-animal',
-        `animal-${data.animal}`,
-        `animal-side-${data.side}`,
-        `animal-action-${data.action}`,
-      ].join(' ')}
-      aria-label={data.animal}
-    >
-      {ANIMAL_ICONS[data.animal]}
-    </span>
-  )
+  50% {
+    transform: translateX(5px) rotate(3deg);
+  }
 }
 
-/* =========================================================
- * Atmosphere
- * ======================================================= */
+@keyframes animalFight {
+  0%,
+  100% {
+    transform: translateX(0) rotate(-4deg);
+  }
 
-function Atmosphere({
-  text,
-}: {
-  text: string
-}) {
-  const time =
-    getTimeOfDay(text)
-
-  const weather =
-    getWeather(text)
-
-  return (
-    <div
-      className={[
-        'scene-atmosphere',
-        `time-${time}`,
-        `weather-${weather}`,
-      ].join(' ')}
-    >
-      {time === 'night' && (
-        <>
-          <span className="story-moon">
-            🌙
-          </span>
-
-          <span className="story-stars">
-            ✨⭐🌟
-          </span>
-        </>
-      )}
-
-      {time === 'morning' && (
-        <span className="story-sun">
-          🌅
-        </span>
-      )}
-
-      {time === 'sunset' && (
-        <span className="story-sunset">
-          🌇
-        </span>
-      )}
-
-      {weather === 'rain' && (
-        <div className="story-rain">
-          🌧️
-        </div>
-      )}
-
-      {weather === 'snow' && (
-        <div className="story-snow">
-          ❄️
-        </div>
-      )}
-
-      {weather === 'wind' && (
-        <div className="story-wind">
-          🍃🍂
-        </div>
-      )}
-
-      {weather === 'cloudy' && (
-        <div className="story-cloud">
-          ☁️☁️
-        </div>
-      )}
-    </div>
-  )
+  50% {
+    transform: translateX(5px) rotate(5deg);
+  }
 }
 
-/* =========================================================
- * Farm
- * ======================================================= */
+@keyframes animalDance {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
 
-function FarmScene({
-  text,
-}: {
-  text: string
-}) {
-  const isRuler = has(
-    text,
-    /주인|농장주|탐욕|부려먹/,
-  )
-
-  const isHard = has(
-    text,
-    /억압|희생|팔려|괴롭|강요|힘들/,
-  )
-
-  const isFree = has(
-    text,
-    /자유|해방|환호|축하|몰아내/,
-  )
-
-  const mode = isRuler
-    ? 'ruler'
-    : isHard
-      ? 'oppress'
-      : isFree
-        ? 'celebrate'
-        : 'calm'
-
-  return (
-    <div
-      className={`farm-scene farm-${mode}`}
-    >
-      <div className="farm-bg-layer">
-        <i className="farm-barn">
-          🛖
-        </i>
-
-        <i className="farm-fence">
-          🪵🪵🪵🪵
-        </i>
-
-        <i className="farm-hill" />
-      </div>
-
-      <div className="farm-animal-layer">
-        {mode === 'calm' && (
-          <>
-            <span className="farm-animal cow">
-              🐄
-            </span>
-            <span className="farm-animal sheep">
-              🐑
-            </span>
-            <span className="farm-animal hen">
-              🐔
-            </span>
-            <span className="farm-animal pig">
-              🐷
-            </span>
-            <span className="farm-animal horse">
-              🐴
-            </span>
-            <span className="farm-animal duck">
-              🦆
-            </span>
-          </>
-        )}
-
-        {mode === 'celebrate' && (
-          <span className="farm-crowd">
-            🐮 🐷 🐔 🐑 🐴 🦆
-          </span>
-        )}
-
-        {mode === 'ruler' && (
-          <>
-            <span className="farm-animal pig-boss">
-              🐷👑
-            </span>
-
-            <span className="farm-workers">
-              👨‍🌾🔨
-            </span>
-          </>
-        )}
-
-        {mode === 'oppress' && (
-          <>
-            <span className="farm-animal horse">
-              🐴
-            </span>
-
-            <span className="farm-animal cow">
-              🐄
-            </span>
-
-            <i className="farm-cart">
-              🛒
-            </i>
-
-            <div className="farm-shadow-overlay" />
-          </>
-        )}
-      </div>
-    </div>
-  )
+  50% {
+    transform: rotate(8deg) translateY(-7px);
+  }
 }
 
-/* =========================================================
- * Background
- * ======================================================= */
+@keyframes objectFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-function SceneBackground({
-  text,
-  kind,
-}: {
-  text: string
-  kind: SceneKind
-}) {
-  const showBoat = has(
-    text,
-    /배|항해|돛|카누/,
-  )
-
-  const showMountain = has(
-    text,
-    /산|언덕|절벽|계곡/,
-  )
-
-  const showRainbow = has(
-    text,
-    /무지개/,
-  )
-
-  return (
-    <div className="scene-bg">
-      {kind === 'farm' && (
-        <FarmScene text={text} />
-      )}
-
-      {kind === 'forest' && (
-        <>
-          <i className="story-tree left">
-            🌲
-          </i>
-
-          <i className="story-tree center">
-            🌳
-          </i>
-
-          <i className="story-tree right">
-            🌲
-          </i>
-
-          <i className="story-path" />
-        </>
-      )}
-
-      {kind === 'garden' && (
-        <>
-          <i className="story-tree left">
-            🌳
-          </i>
-
-          <i className="story-tree right">
-            🌳
-          </i>
-
-          <span className="story-flowerbed">
-            🌸🌻🌹🌷🦋
-          </span>
-        </>
-      )}
-
-      {kind === 'sea' && (
-        <>
-          <i className="story-island">
-            🏝️
-          </i>
-
-          <div className="story-waves">
-            🌊🌊🌊
-          </div>
-
-          {showBoat && (
-            <span className="story-boat">
-              ⛵
-            </span>
-          )}
-        </>
-      )}
-
-      {kind === 'school' && (
-        <>
-          <i className="story-school">
-            🏫
-          </i>
-
-          <i className="story-ground" />
-        </>
-      )}
-
-      {kind === 'home' && (
-        <>
-          <i className="story-home">
-            🏠
-          </i>
-
-          <span className="story-window">
-            🪟
-          </span>
-        </>
-      )}
-
-      {kind === 'city' && (
-        <>
-          <div className="story-city">
-            🏢🏣🏬🏢
-          </div>
-
-          <i className="story-crosswalk" />
-
-          <span className="story-city-car">
-            🚗
-          </span>
-        </>
-      )}
-
-      {kind === 'castle' && (
-        <>
-          <i className="story-castle">
-            🏰
-          </i>
-
-          <span className="story-castle-flag">
-            🚩
-          </span>
-        </>
-      )}
-
-      {kind === 'space' && (
-        <>
-          <i className="story-planet">
-            🪐
-          </i>
-
-          <span className="story-rocket">
-            🚀
-          </span>
-
-          <span className="story-space-star">
-            ⭐✨🌟
-          </span>
-        </>
-      )}
-
-      {kind === 'cave' && (
-        <>
-          <i className="story-cave">
-            🕳️
-          </i>
-
-          <span className="story-crystals">
-            💎✨💎
-          </span>
-        </>
-      )}
-
-      {kind === 'hospital' && (
-        <i className="story-hospital">
-          🏥
-        </i>
-      )}
-
-      {kind === 'market' && (
-        <>
-          <i className="story-shop">
-            🏪
-          </i>
-
-          <span className="story-awning">
-            🎪
-          </span>
-        </>
-      )}
-
-      {kind === 'winter' && (
-        <>
-          <span className="story-snowman">
-            ☃️
-          </span>
-
-          <i className="story-pine">
-            🌲
-          </i>
-
-          <i className="story-pine second">
-            🌲
-          </i>
-        </>
-      )}
-
-      {kind === 'book' && (
-        <>
-          <i className="story-shelf">
-            📚
-          </i>
-
-          <i className="story-table">
-            🛋️
-          </i>
-        </>
-      )}
-
-      {showMountain && (
-        <span className="story-mountain">
-          ⛰️
-        </span>
-      )}
-
-      {showRainbow && (
-        <span className="story-rainbow">
-          🌈
-        </span>
-      )}
-    </div>
-  )
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-/* =========================================================
- * Objects
- * ======================================================= */
+@keyframes treasureGlow {
+  0%,
+  100% {
+    transform: scale(1);
+    filter:
+      drop-shadow(0 5px 5px rgba(0, 0, 0, 0.12));
+  }
 
-function StoryObjects({
-  text,
-}: {
-  text: string
-}) {
-  const objects =
-    detectObjects(text)
-
-  return (
-    <>
-      {objects.map(
-        (object, index) => (
-          <span
-            key={`${object.type}-${index}`}
-            className={[
-              'story-item',
-              `object-${object.type}`,
-              `object-side-${object.side}`,
-            ].join(' ')}
-          >
-            {object.icon}
-          </span>
-        ),
-      )}
-    </>
-  )
+  50% {
+    transform: scale(1.08);
+    filter:
+      drop-shadow(0 0 12px rgba(255, 215, 70, 0.65));
+  }
 }
 
-/* =========================================================
- * Main scene
- * ======================================================= */
+@keyframes magicFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
 
-function SceneDetails({
-  sentence,
-  kind,
-}: {
-  sentence: string
-  kind: SceneKind
-}) {
-  const text =
-    sentence.toLowerCase()
-
-  const characters =
-    makeCharacterScenes(text)
-
-  const animals =
-    makeAnimalScenes(text)
-
-  const empty =
-    !sentence.trim()
-
-  return (
-    <>
-      <Atmosphere text={text} />
-
-      <SceneBackground
-        text={text}
-        kind={kind}
-      />
-
-      {/* 인물 */}
-      <div className="scene-character-layer">
-        {characters.map(
-          (character, index) => (
-            <Person
-              key={`${character.character}-${index}`}
-              data={character}
-            />
-          ),
-        )}
-      </div>
-
-      {/* 동물 */}
-      <div className="scene-animal-layer">
-        {animals.map(
-          (animal, index) => (
-            <AnimalSprite
-              key={`${animal.animal}-${index}`}
-              data={animal}
-            />
-          ),
-        )}
-      </div>
-
-      {/* 소품 */}
-      <div className="scene-object-layer">
-        <StoryObjects text={text} />
-      </div>
-
-      {empty && (
-        <div className="scene-empty">
-          <span className="scene-empty-icon">
-            🎨
-          </span>
-
-          <span className="scene-empty-text">
-            이야기를 적으면 그림이 완성돼요
-          </span>
-        </div>
-      )}
-    </>
-  )
+  50% {
+    transform: translateY(-8px) rotate(5deg);
+  }
 }
 
-/* =========================================================
- * Main component
- * ======================================================= */
+@keyframes fireMove {
+  0%,
+  100% {
+    transform: scale(1);
+  }
 
-export default function ComicPanel({
-  panel,
-  subtitle,
-  active,
-  compact,
-  onClick,
-}: Props) {
-  const sentence =
-    panel.sentence ?? ''
+  50% {
+    transform: scale(1.08) translateY(-3px);
+  }
+}
 
-  const kind =
-    getSceneKind(sentence)
+@keyframes giftBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-  const className = [
-    'comic-panel',
-    compact && 'compact',
-    active && 'is-active',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  50% {
+    transform: translateY(-8px);
+  }
+}
 
-  return (
-    <button
-      type="button"
-      className={className}
-      onClick={onClick}
-      aria-label={`${panel.stage} 단계 입력란으로 이동`}
-    >
-      <span className="panel-label">
-        <strong>
-          {panel.stage}
-        </strong>
+@keyframes badgeFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-        {' · '}
+  50% {
+    transform: translateY(-3px);
+  }
+}
 
-        {subtitle}
-      </span>
+@keyframes moonFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-      <div
-        className={[
-          'scene',
-          `scene-${kind}`,
-        ].join(' ')}
-      >
-        <SceneDetails
-          sentence={sentence}
-          kind={kind}
-        />
-      </div>
+  50% {
+    transform: translateY(-7px);
+  }
+}
 
-      <div className="speech-bubble">
-        {sentence ||
-          '이야기 문장을 적어 주세요.'}
-      </div>
-    </button>
-  )
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes cloudMove {
+  from {
+    transform: translateX(-15px);
+  }
+
+  to {
+    transform: translateX(35px);
+  }
+}
+
+@keyframes rainFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes snowFall {
+  from {
+    transform: translateY(-20px);
+  }
+
+  to {
+    transform: translateY(30px);
+  }
+}
+
+@keyframes windMove {
+  0%,
+  100% {
+    transform: translateX(0) rotate(-5deg);
+  }
+
+  50% {
+    transform: translateX(25px) rotate(8deg);
+  }
+}
+
+@keyframes gentleFloat {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+@keyframes waveMove {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(-12px);
+  }
+}
+
+@keyframes boatMove {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateY(-7px) rotate(3deg);
+  }
+}
+
+@keyframes carMove {
+  0% {
+    transform: translateX(-20px);
+  }
+
+  100% {
+    transform: translateX(430px);
+  }
+}
+
+@keyframes planetFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+}
+
+@keyframes rocketFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-20deg);
+  }
+
+  50% {
+    transform: translateY(-12px) rotate(-15deg);
+  }
+}
+
+@keyframes crystalGlow {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+
+  50% {
+    opacity: 1;
+    filter:
+      drop-shadow(0 0 10px rgba(130, 210, 255, 0.7));
+  }
+}
+
+@keyframes emptyFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
