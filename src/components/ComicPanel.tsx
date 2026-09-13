@@ -216,6 +216,8 @@ export default function ComicPanel({ panel, subtitle, active, compact, onClick }
   const kind = sceneKind(panel.sentence)
   const isClimax = panel.stage === '전' // '전' 단계일 때 극적 연출 적용
 
-  return (
-    
-<strong>{panel.stage}</strong> · {subtitle}
+return (
+  <>
+    <strong>{panel.stage}</strong> · {subtitle}
+  </>
+);
