@@ -137,52 +137,31 @@ function sceneKind(text: string): SceneKind {
  * ======================================================= */
 
 const CHARACTER_RULES: Array<[Character, RegExp]> = [
+  [
+    'pair',
+    /친구들|아이들|두 사람|둘이|함께|소녀와|소년과|엄마와|아빠와|형제|자매|남매/,
+  ],
   ['grandmother', /할머니|외할머니|할머님/],
   ['grandfather', /할아버지|외할아버지|할아버님/],
   ['mother', /엄마|어머니|어머님|맘/],
-  ['father', /아빠|아버지|아버님/],
+  ['father', /아빠|아버지|아버님|아빠와/],
   ['teacher', /선생님|교사|담임/],
-  ['doctor', /의사|의료진/],
+  ['doctor', /의사|간호사|의료진/],
   ['knight', /기사|전사|용사/],
-  ['king', /왕(?!자)|국왕/],
+  ['king', /왕|국왕/],
   ['queen', /여왕|왕비/],
   ['wizard', /마법사|현자|마법소녀|마녀/],
   ['girl', /소녀|여자아이|그녀|공주|딸/],
-  ['boy', /소년|남자아이|왕자|아들/],
+  ['boy', /소년|남자아이|그|왕자|아들/],
+  ['girl', /아이|주인공|사람|친구/],
 ]
 
-/*
- * 문장에 등장하는 캐릭터를 모두 찾습니다.
- * 기존 characterFrom()은 첫 번째 캐릭터 하나만 반환했기 때문에
- * "엄마와 아빠가..." 같은 문장에서 캐릭터가 겹치는 문제가 생겼습니다.
- */
-function charactersFrom(text: string): Character[] {
-  const result: Character[] = []
+function characterFrom(text: string): Character {
+  const rule = CHARACTER_RULES.find(([, pattern]) =>
+    matches(text, pattern),
+  )
 
-  for (const [character, pattern] of CHARACTER_RULES) {
-    if (matches(text, pattern) && !result.includes(character)) {
-      result.push(character)
-    }
-  }
-
-  // 구체적인 인물이 없고 "두 사람/친구들" 등만 있는 경우
-  if (
-    result.length === 0 &&
-    matches(text, /친구들|아이들|두 사람|둘이|함께|형제|자매|남매/)
-  ) {
-    result.push('girl', 'boy')
-  }
-
-  // 일반적인 한 명의 주인공
-  if (
-    result.length === 0 &&
-    matches(text, /아이|주인공|사람|친구/)
-  ) {
-    result.push('girl')
-  }
-
-  // 화면이 너무 복잡해지지 않도록 최대 4명
-  return result.slice(0, 4)
+  return rule?.[0] ?? 'none'
 }
 
 /* =========================================================
@@ -366,14 +345,12 @@ function Person({
   character,
   action,
   mood,
-  index = 0,
-  total = 1,
+  side = 'center',
 }: {
   character: Character
   action: Action
   mood: Mood
-  index?: number
-  total?: number
+  side?: Direction
 }) {
   const moodEmoji =
     mood === 'happy'
@@ -388,63 +365,12 @@ function Person({
               ? '🔥'
               : ''
 
-  /*
-   * 캐릭터별 좌우 위치를 직접 지정합니다.
-   * CSS 파일이 없어도 이 값으로 서로 겹치지 않습니다.
-   */
-  const positions: Record<number, number[]> = {
-    1: [50],
-    2: [27, 73],
-    3: [17, 50, 83],
-    4: [10, 37, 63, 90],
-  }
-
-  const left = (positions[total] ?? positions[4])[index] ?? 50
-
-  const size =
-    total >= 4
-      ? 0.78
-      : total === 3
-        ? 0.86
-        : total === 2
-          ? 0.94
-          : 1
-
   return (
     <div
-      className={[
-        'story-person',
-        `character-${character}`,
-        `action-${action}`,
-        `mood-${mood}`,
-        `person-count-${total}`,
-        `person-index-${index}`,
-      ].join(' ')}
-      style={{
-        position: 'absolute',
-        left: `${left}%`,
-        bottom: '9%',
-        width: `${80 * size}px`,
-        height: `${155 * size}px`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-end',
-        transform: 'translateX(-50%)',
-        zIndex: 30 + index,
-        pointerEvents: 'none',
-      }}
+className={`story-person character-${character} action-${action} mood-${mood}`}
     >
       {moodEmoji && (
-        <span
-          className="person-mood-badge"
-          style={{
-            position: 'absolute',
-            top: '0',
-            right: '0',
-            zIndex: 3,
-          }}
-        >
+        <span className="person-mood-badge">
           {moodEmoji}
         </span>
       )}
@@ -452,28 +378,12 @@ function Person({
       <span
         className="person-character-icon"
         aria-hidden="true"
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          fontSize: `${64 * size}px`,
-          lineHeight: 1,
-          whiteSpace: 'nowrap',
-        }}
       >
         {CHARACTER_ICONS[character]}
       </span>
 
-      {/* 기존 캐릭터 CSS가 있으면 그대로 활용 */}
-      <i
-        className="person-avatar"
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}
-      >
+      {/* 기존 CSS 캐릭터가 있다면 계속 사용할 수 있도록 유지 */}
+      <i className="person-avatar" aria-hidden="true">
         <b className="person-head">
           <b className="person-face" />
           <b className="person-hair" />
@@ -829,25 +739,36 @@ function StoryObjects({
 
   const animal = animalFrom(text)
 
-  const characters = charactersFrom(text)
+  const character = characterFrom(text)
   const action = actionFrom(text)
   const mood = moodFrom(text)
 
   return (
     <div className="scene-objects">
-      {/* 캐릭터
-          여러 명을 각각 독립된 위치에 배치합니다. */}
-      {kind !== 'farm' &&
-        characters.map((character, index) => (
+      {/* 캐릭터 */}
+      {character !== 'none' &&
+        kind !== 'farm' && (
           <Person
-            key={`${character}-${index}`}
             character={character}
             action={action}
             mood={mood}
-            index={index}
-            total={characters.length}
+            side={
+              character === 'pair'
+                ? 'left'
+                : 'center'
+            }
           />
-        ))}
+        )}
+
+      {character === 'pair' &&
+        kind !== 'farm' && (
+          <Person
+            character="boy"
+            action={action}
+            mood={mood}
+            side="right"
+          />
+        )}
 
       {/* 동물 */}
       {animal !== 'none' &&
@@ -1020,109 +941,6 @@ function SceneDetails({
   )
 }
 
-const COMIC_PANEL_STYLES = `
-  .comic-panel {
-    position: relative;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .comic-panel .scene {
-    position: relative;
-    width: 100%;
-    min-height: 360px;
-    overflow: hidden;
-    isolation: isolate;
-  }
-
-  /* 배경은 캐릭터보다 뒤 */
-  .comic-panel .scene-bg,
-  .comic-panel .scene-atmosphere {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  /* 사물 */
-  .comic-panel .scene-objects {
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    pointer-events: none;
-  }
-
-  /*
-   * 캐릭터의 핵심:
-   * 각 Person이 inline left 값을 가지므로 별도 CSS 파일이 없어도
-   * 1/2/3/4명 각각 서로 다른 위치에 놓입니다.
-   */
-  .comic-panel .story-person {
-    box-sizing: border-box;
-    pointer-events: none;
-    user-select: none;
-  }
-
-  .comic-panel .person-character-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1em;
-    min-height: 1em;
-    text-align: center;
-  }
-
-  .comic-panel .person-mood-badge {
-    font-size: 20px;
-    line-height: 1;
-  }
-
-  /*
-   * 기존 person-avatar CSS가 남아 있어도 실제 캐릭터 아이콘을
-   * 덮어쓰지 않도록 투명하게 유지합니다.
-   */
-  .comic-panel .story-person .person-avatar {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* 캐릭터 이름/부가 요소가 너무 커져서 서로 침범하는 것을 방지 */
-  .comic-panel .story-person .person-label {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* 3~4명일 때 캐릭터 간격을 더 확실하게 확보 */
-  .comic-panel .person-count-3,
-  .comic-panel .person-count-4 {
-    overflow: visible;
-  }
-
-  /* 오브젝트가 캐릭터 위에 올라오지 않도록 */
-  .comic-panel .story-item {
-    z-index: 10;
-    pointer-events: none;
-  }
-
-  /* 말풍선은 장면 아래 */
-  .comic-panel .speech-bubble {
-    position: relative;
-    z-index: 200;
-  }
-
-  @media (max-width: 600px) {
-    .comic-panel .scene {
-      min-height: 300px;
-    }
-
-    .comic-panel .person-mood-badge {
-      font-size: 16px;
-    }
-  }
-`
-
 /* =========================================================
  * Main Component
  * ======================================================= */
@@ -1145,9 +963,7 @@ export default function ComicPanel({
     .join(' ')
 
   return (
-    <>
-      <style>{COMIC_PANEL_STYLES}</style>
-      <button
+    <button
       type="button"
       className={className}
       onClick={onClick}
@@ -1170,7 +986,6 @@ export default function ComicPanel({
         {panel.sentence ||
           '이야기 문장을 적어 주세요.'}
       </div>
-      </button>
-    </>
+    </button>
   )
 }
