@@ -59,61 +59,20 @@ function moodFrom(text: string): Mood {
   return 'normal'
 }
 
-/* SVG 그래픽 기반의 캐릭터 컴포넌트 */
 function Person({ character, action, mood, side = 'center' }: { character: Character; action: Action; mood: Mood; side?: 'left' | 'center' | 'right' }) {
-  const isGirl = character === 'girl' || character === 'pair'
-  const shirtColor = isGirl ? '#FF7675' : character === 'adult' ? '#6C5CE7' : '#0984E3'
-  const hairColor = character === 'adult' ? '#636E72' : isGirl ? '#D63031' : '#2D3436'
-
+  const moodEmoji = mood === 'happy' ? '✨' : mood === 'sad' ? '💧' : mood === 'angry' ? '💢' : mood === 'surprised' ? '❗' : mood === 'brave' ? '🔥' : ''
   return (
     <div className={`story-person character-${character} action-${action} mood-${mood} side-${side}`}>
-      <svg viewBox="0 0 100 120" className="person-svg" width="70" height="90">
-        <ellipse cx="50" cy="112" rx="22" ry="5" fill="rgba(0,0,0,0.15)" />
-        <g className="person-body-group">
-          {/* 머리카락 (뒷모습 레이어) */}
-          {isGirl && <path d="M26 35 C18 55 22 78 30 82 C35 60 38 45 34 35 Z M74 35 C82 55 78 78 70 82 C65 60 62 45 66 35 Z" fill={hairColor} />}
-          
-          {/* 몸통 및 옷 */}
-          <path d="M34 52 L66 52 L62 88 L38 88 Z" fill={shirtColor} rx="3" />
-          
-          {/* 다리 */}
-          <rect x="40" y="86" width="7" height="24" rx="3" fill="#2D3436" className="leg left" />
-          <rect x="53" y="86" width="7" height="24" rx="3" fill="#2D3436" className="leg right" />
-          <ellipse cx="43" cy="109" rx="5.5" ry="3" fill="#D63031" />
-          <ellipse cx="56" cy="109" rx="5.5" ry="3" fill="#D63031" />
-
-          {/* 팔 */}
-          <rect x="24" y="54" width="8" height="22" rx="4" fill="#FFEAA7" className="arm left" />
-          <rect x="68" y="54" width="8" height="22" rx="4" fill="#FFEAA7" className="arm right" />
-
-          {/* 얼굴 */}
-          <circle cx="50" cy="35" r="18" fill="#FFEAA7" />
-          
-          {/* 윗머리 */}
-          <path d="M32 30 C32 16 68 16 68 30 C60 20 40 20 32 30 Z" fill={hairColor} />
-
-          {/* 눈 및 표정 */}
-          <circle cx="43" cy="35" r="2.2" fill="#2D3436" />
-          <circle cx="57" cy="35" r="2.2" fill="#2D3436" />
-          <circle cx="44" cy="34" r="0.8" fill="#FFFFFF" />
-          <circle cx="58" cy="34" r="0.8" fill="#FFFFFF" />
-
-          {/* 볼터치 */}
-          <ellipse cx="40" cy="39" rx="3" ry="1.5" fill="#FF7675" opacity="0.6" />
-          <ellipse cx="60" cy="39" rx="3" ry="1.5" fill="#FF7675" opacity="0.6" />
-
-          {/* 입 모양 */}
-          {mood === 'happy' && <path d="M44 41 Q50 47 56 41" stroke="#2D3436" strokeWidth="2" fill="none" strokeLinecap="round" />}
-          {mood === 'sad' && <path d="M44 45 Q50 40 56 45" stroke="#2D3436" strokeWidth="2" fill="none" strokeLinecap="round" />}
-          {mood === 'angry' && <path d="M44 44 L56 42" stroke="#2D3436" strokeWidth="2" fill="none" strokeLinecap="round" />}
-          {(mood === 'normal' || mood === 'surprised' || mood === 'brave') && <path d="M45 43 L55 43" stroke="#2D3436" strokeWidth="2" fill="none" strokeLinecap="round" />}
-        </g>
-      </svg>
+      {moodEmoji && <span className="person-mood-badge">{moodEmoji}</span>}
+      <i className="person-avatar" aria-hidden="true">
+        <b className="person-head"><b className="person-face" /><b className="person-hair" /></b>
+        <b className="person-body"><b className="person-torso" /><b className="person-arm left-arm" /><b className="person-arm right-arm" /></b>
+        <b className="person-legs"><b className="person-leg left-leg" /><b className="person-leg right-leg" /></b>
+      </i>
     </div>
   )
 }
 
-/* 벡터 그래픽으로 구현한 농장 배경 */
 function FarmScene({ text }: { text: string }) {
   const ruler = has(text, /주인|인간.*얼굴|탐욕|부려먹/)
   const oppress = has(text, /억압|희생|팔려|괴롭|강요|힘들/)
@@ -122,39 +81,40 @@ function FarmScene({ text }: { text: string }) {
 
   return (
     <div className={`farm-scene farm-${moment}`}>
-      <svg className="farm-svg" viewBox="0 0 300 180" preserveAspectRatio="xMidYMid slice">
-        <path d="M0 100 Q90 75 190 95 T300 85 L300 180 L0 180 Z" fill="#55EFC4" />
-        <path d="M0 125 Q130 105 300 125 L300 180 L0 180 Z" fill="#00B894" />
-
-        {/* 붉은 헛간 */}
-        <g transform="translate(15, 45)">
-          <path d="M10 40 L40 15 L70 40 L70 90 L10 90 Z" fill="#D63031" stroke="#2D3436" strokeWidth="2" />
-          <path d="M5 40 L40 10 L75 40" fill="none" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-          <rect x="30" y="60" width="20" height="30" fill="#636E72" />
-          <path d="M30 60 L50 90 M50 60 L30 90" stroke="#FFFFFF" strokeWidth="1.5" />
-        </g>
-
-        {/* 울타리 */}
-        <path d="M90 135 L280 135 M90 145 L280 145" stroke="#FFEAA7" strokeWidth="3" />
-        <path d="M100 128 L100 152 M140 128 L140 152 M180 128 L180 152 M220 128 L220 152 M260 128 L260 152" stroke="#FFEAA7" strokeWidth="3.5" strokeLinecap="round" />
-
-        {/* 동적으로 묘사되는 상징 및 동물 */}
+      <div className="farm-bg-layer">
+        <i className="farm-barn">🛖</i>
+        <i className="farm-fence">🪵🪵🪵</i>
+        <i className="farm-hill" />
+      </div>
+      <div className="farm-animal-layer">
         {moment === 'calm' && (
-          <g transform="translate(120, 110)">
-            <rect x="10" y="10" width="28" height="18" rx="5" fill="#FFFFFF" stroke="#2D3436" strokeWidth="1.5" />
-            <circle cx="17" cy="17" r="3.5" fill="#2D3436" />
-            <circle cx="30" cy="20" r="2.5" fill="#2D3436" />
-            <circle cx="34" cy="11" r="6" fill="#FFFFFF" stroke="#2D3436" strokeWidth="1.5" />
-          </g>
+          <>
+            <span className="farm-animal cow" title="소">🐄</span>
+            <span className="farm-animal sheep" title="양">🐑</span>
+            <span className="farm-animal hen" title="닭">🐔</span>
+          </>
+        )}
+        {moment === 'celebrate' && (
+          <>
+            <span className="farm-crowd">🥳 🐮 🐖 🐓</span>
+            <span className="farm-flag">🚩</span>
+            <span className="farm-sparkles">✨ 🎊</span>
+          </>
+        )}
+        {moment === 'oppress' && (
+          <>
+            <span className="farm-animal horse" title="말">🐴</span>
+            <i className="farm-cart">🛒</i>
+            <div className="farm-shadow-overlay" />
+          </>
         )}
         {moment === 'ruler' && (
-          <g transform="translate(170, 100)">
-            <ellipse cx="25" cy="25" rx="16" ry="13" fill="#FF7675" stroke="#2D3436" strokeWidth="1.5" />
-            <circle cx="37" cy="22" r="8" fill="#FF7675" stroke="#2D3436" strokeWidth="1.5" />
-            <path d="M30 11 L34 3 L38 9 L42 3 L46 11 Z" fill="#FDCB6E" stroke="#2D3436" strokeWidth="1" />
-          </g>
+          <>
+            <span className="farm-animal pig-boss" title="나폴레옹 돼지">🐷👑</span>
+            <span className="farm-workers">👨‍🌾 🔨</span>
+          </>
         )}
-      </svg>
+      </div>
     </div>
   )
 }
