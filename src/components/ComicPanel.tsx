@@ -218,4 +218,4 @@ export default function ComicPanel({ panel, subtitle, active, compact, onClick }
 
   return (
     
-      **{panel.stage}** · {subtitle}
+<strong>{panel.stage}</strong> · {subtitle}
