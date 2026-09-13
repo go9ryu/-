@@ -5,6 +5,20 @@ from datetime import datetime, timezone
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+```python
+  from fastapi import FastAPI
+  from fastapi.middleware.cors import CORSMiddleware
+
+  app = FastAPI()
+
+  app.add_middleware(
+      CORSMiddleware,
+      allow_origins=["*"],
+      allow_credentials=True,
+      allow_methods=["*"],
+      allow_headers=["*"],
+  )
+  ```
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data", "app.db")
 STAGES = ["기", "승", "전", "결"]
