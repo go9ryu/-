@@ -8,6 +8,10 @@ type Props = {
   onClick?: () => void
 }
 
+/* =========================================================
+ * Types
+ * ======================================================= */
+
 type SceneKind =
   | 'farm'
   | 'sea'
@@ -33,43 +37,39 @@ type Character =
   | 'grandfather'
   | 'teacher'
   | 'doctor'
-  | 'nurse'
   | 'knight'
   | 'king'
   | 'queen'
   | 'wizard'
-  | 'fairy'
-  | 'scientist'
-  | 'farmer'
+  | 'pair'
+  | 'none'
 
-type AnimalKind =
+type Animal =
   | 'cat'
   | 'dog'
   | 'rabbit'
   | 'fox'
-  | 'wolf'
   | 'bear'
+  | 'panda'
   | 'lion'
   | 'tiger'
   | 'elephant'
   | 'giraffe'
   | 'monkey'
-  | 'panda'
+  | 'frog'
+  | 'penguin'
+  | 'owl'
   | 'deer'
+  | 'wolf'
   | 'squirrel'
   | 'hedgehog'
-  | 'frog'
-  | 'duck'
-  | 'chicken'
   | 'cow'
-  | 'sheep'
-  | 'horse'
   | 'pig'
-  | 'mouse'
-  | 'bird'
-  | 'fish'
-  | 'dolphin'
-  | 'penguin'
+  | 'sheep'
+  | 'chicken'
+  | 'horse'
+  | 'duck'
+  | 'none'
 
 type Action =
   | 'read'
@@ -84,6 +84,7 @@ type Action =
   | 'carry'
   | 'fight'
   | 'dance'
+  | 'cry'
 
 type Mood =
   | 'happy'
@@ -93,192 +94,264 @@ type Mood =
   | 'angry'
   | 'normal'
 
-const has = (text: string, pattern: RegExp) => pattern.test(text)
+type Direction = 'left' | 'center' | 'right'
 
-/* --------------------------------------------------
- * 장면
- * -------------------------------------------------- */
+/* =========================================================
+ * Utility
+ * ======================================================= */
 
-const SCENE_RULES: Array<[RegExp, SceneKind]> = [
-  [/농장|헛간|돼지|말|당나귀|가축|닭|양|소|목장|농부/, 'farm'],
-  [/우주|로켓|별나라|외계|행성|달나라|은하/, 'space'],
-  [/성(벽|문|안|에|으로|에서)?|궁전|왕국|왕자|공주|마법사|기사|성채/, 'castle'],
-  [/병원|의사|간호사|환자|진료|약국/, 'hospital'],
-  [/시장|가게|마트|상점|빵집|식당|카페|음식점/, 'market'],
-  [/동굴|광산|터널|지하|비밀방/, 'cave'],
-  [/눈밭|스키|얼음|빙판|눈사람|겨울왕국|겨울/, 'winter'],
-  [/바다|해변|파도|강|호수|항구|섬|배|수영|물고기/, 'sea'],
-  [/학교|교실|도서관|운동장|선생님|학생|유치원/, 'school'],
-  [/집|방|거실|부엌|침대|마당|창문|가족/, 'home'],
-  [/도시|거리|골목|역|버스|자동차|신호등|빌딩|공원/, 'city'],
-  [/정원|꽃밭|꽃|봄|나비|화단/, 'garden'],
-  [/숲|나무|풀|산|언덕|숲길|캠핑|계곡/, 'forest'],
+const matches = (text: string, pattern: RegExp) => pattern.test(text)
+
+const includesAny = (text: string, keywords: string[]) =>
+  keywords.some(keyword => text.includes(keyword))
+
+const emptyText = (text: string) => !text.trim()
+
+/* =========================================================
+ * Scene detection
+ * ======================================================= */
+
+const SCENE_RULES: Array<[SceneKind, RegExp]> = [
+  ['farm', /농장|헛간|돼지|말|당나귀|가축|닭|양|소|목장|농부|축사/],
+  ['space', /우주|로켓|별나라|외계|행성|달나라|은하|우주선/],
+  ['castle', /성|궁전|왕국|왕자|공주|마법사|용|기사|왕|여왕/],
+  ['hospital', /병원|의사|간호사|환자|진료|약국|응급실/],
+  ['market', /시장|가게|마트|상점|빵집|식당|카페|음식점|편의점/],
+  ['cave', /동굴|광산|터널|지하|비밀방|보물동굴/],
+  ['winter', /눈밭|스키|얼음|빙판|눈사람|겨울왕국|눈보라/],
+  ['sea', /바다|해변|파도|강|호수|항구|섬|배|수영|물고기|해수욕장/],
+  ['school', /학교|교실|도서관|운동장|선생님|학생|유치원|학원/],
+  ['home', /집|방|거실|부엌|침대|마당|창문|가족|아파트/],
+  ['city', /도시|거리|골목|역|버스|자동차|신호등|빌딩|공원|횡단보도/],
+  ['garden', /정원|꽃밭|꽃|봄|나비|화단|장미|튤립/],
+  ['forest', /숲|나무|풀|산|언덕|숲길|캠핑|계곡|등산/],
 ]
 
 function sceneKind(text: string): SceneKind {
-  const rule = SCENE_RULES.find(([pattern]) => pattern.test(text))
-  return rule?.[1] ?? 'book'
+  const rule = SCENE_RULES.find(([, pattern]) => matches(text, pattern))
+  return rule?.[0] ?? 'book'
 }
 
-/* --------------------------------------------------
- * 등장인물
- * -------------------------------------------------- */
+/* =========================================================
+ * Character detection
+ * ======================================================= */
 
-const CHARACTER_RULES: Array<{
-  kind: Character
-  pattern: RegExp
-  icon: string
-}> = [
-  { kind: 'grandmother', pattern: /할머니/, icon: '👵' },
-  { kind: 'grandfather', pattern: /할아버지/, icon: '👴' },
-  { kind: 'mother', pattern: /엄마|어머니/, icon: '👩' },
-  { kind: 'father', pattern: /아빠|아버지/, icon: '👨' },
-  { kind: 'teacher', pattern: /선생님|교사/, icon: '👩‍🏫' },
-  { kind: 'doctor', pattern: /의사/, icon: '👨‍⚕️' },
-  { kind: 'nurse', pattern: /간호사/, icon: '👩‍⚕️' },
-  { kind: 'knight', pattern: /기사/, icon: '🛡️' },
-  { kind: 'king', pattern: /왕(자)?가 아닌|국왕|임금/, icon: '🤴' },
-  { kind: 'queen', pattern: /여왕/, icon: '👸' },
-  { kind: 'wizard', pattern: /마법사/, icon: '🧙' },
-  { kind: 'fairy', pattern: /요정/, icon: '🧚' },
-  { kind: 'scientist', pattern: /과학자|연구원/, icon: '🧑‍🔬' },
-  { kind: 'farmer', pattern: /농부|농장주/, icon: '👨‍🌾' },
-  { kind: 'girl', pattern: /소녀|여자아이|그녀|공주|딸/, icon: '👧' },
-  { kind: 'boy', pattern: /소년|남자아이|왕자|아들/, icon: '👦' },
+const CHARACTER_RULES: Array<[Character, RegExp]> = [
+  [
+    'pair',
+    /친구들|아이들|두 사람|둘이|함께|소녀와|소년과|엄마와|아빠와|형제|자매|남매/,
+  ],
+  ['grandmother', /할머니|외할머니|할머님/],
+  ['grandfather', /할아버지|외할아버지|할아버님/],
+  ['mother', /엄마|어머니|어머님|맘/],
+  ['father', /아빠|아버지|아버님|아빠와/],
+  ['teacher', /선생님|교사|담임/],
+  ['doctor', /의사|간호사|의료진/],
+  ['knight', /기사|전사|용사/],
+  ['king', /왕|국왕/],
+  ['queen', /여왕|왕비/],
+  ['wizard', /마법사|현자|마법소녀|마녀/],
+  ['girl', /소녀|여자아이|그녀|공주|딸/],
+  ['boy', /소년|남자아이|그|왕자|아들/],
+  ['girl', /아이|주인공|사람|친구/],
 ]
 
-function charactersFrom(text: string): Character[] {
-  const result = CHARACTER_RULES
-    .filter(rule => rule.pattern.test(text))
-    .map(rule => rule.kind)
+function characterFrom(text: string): Character {
+  const rule = CHARACTER_RULES.find(([, pattern]) =>
+    matches(text, pattern),
+  )
 
-  // 가족이라는 표현이면 가족을 간단하게 표현
-  if (/가족/.test(text) && result.length === 0) {
-    return ['mother', 'father', 'girl']
-  }
-
-  // "두 사람", "함께", "친구들"처럼 여러 명을 의미
-  if (
-    /친구들|아이들|두 사람|둘이|함께|두 명|친구와/.test(text) &&
-    result.length === 0
-  ) {
-    return ['girl', 'boy']
-  }
-
-  // 특정 인물이 없지만 주인공/아이가 등장
-  if (result.length === 0 && /아이|주인공|친구/.test(text)) {
-    return ['girl']
-  }
-
-  return [...new Set(result)].slice(0, 4)
+  return rule?.[0] ?? 'none'
 }
 
-/* --------------------------------------------------
- * 동물
- * -------------------------------------------------- */
+/* =========================================================
+ * Action detection
+ * ======================================================= */
 
-const ANIMAL_RULES: Array<{
-  kind: AnimalKind
-  pattern: RegExp
-  icon: string
-}> = [
-  { kind: 'cat', pattern: /고양이|냥이/, icon: '🐱' },
-  { kind: 'dog', pattern: /강아지|개/, icon: '🐶' },
-  { kind: 'rabbit', pattern: /토끼/, icon: '🐰' },
-  { kind: 'fox', pattern: /여우/, icon: '🦊' },
-  { kind: 'wolf', pattern: /늑대/, icon: '🐺' },
-  { kind: 'bear', pattern: /곰/, icon: '🐻' },
-  { kind: 'lion', pattern: /사자/, icon: '🦁' },
-  { kind: 'tiger', pattern: /호랑이/, icon: '🐯' },
-  { kind: 'elephant', pattern: /코끼리/, icon: '🐘' },
-  { kind: 'giraffe', pattern: /기린/, icon: '🦒' },
-  { kind: 'monkey', pattern: /원숭이/, icon: '🐒' },
-  { kind: 'panda', pattern: /판다/, icon: '🐼' },
-  { kind: 'deer', pattern: /사슴/, icon: '🦌' },
-  { kind: 'squirrel', pattern: /다람쥐/, icon: '🐿️' },
-  { kind: 'hedgehog', pattern: /고슴도치/, icon: '🦔' },
-  { kind: 'frog', pattern: /개구리/, icon: '🐸' },
-  { kind: 'duck', pattern: /오리/, icon: '🦆' },
-  { kind: 'chicken', pattern: /닭|병아리/, icon: '🐔' },
-  { kind: 'cow', pattern: /소/, icon: '🐄' },
-  { kind: 'sheep', pattern: /양/, icon: '🐑' },
-  { kind: 'horse', pattern: /말|망아지/, icon: '🐴' },
-  { kind: 'pig', pattern: /돼지/, icon: '🐷' },
-  { kind: 'mouse', pattern: /쥐/, icon: '🐭' },
-  { kind: 'bird', pattern: /새|참새|독수리|부엉이/, icon: '🕊️' },
-  { kind: 'fish', pattern: /물고기|금붕어/, icon: '🐠' },
-  { kind: 'dolphin', pattern: /돌고래/, icon: '🐬' },
-  { kind: 'penguin', pattern: /펭귄/, icon: '🐧' },
+const ACTION_RULES: Array<[Action, RegExp]> = [
+  ['sleep', /잠들|잠을 자|꿈을 꾸|누워|잠자/],
+  ['cry', /울|눈물|흐느|슬퍼해|훌쩍/],
+  ['dance', /춤|노래|파티|축제|춤추/],
+  ['fight', /싸우|맞서|공격|전투|물리치|이겨|싸움/],
+  ['carry', /들고|메고|옮기|가방|상자를 들|업고/],
+  ['point', /가리키|손짓|알려|보여 줘|설명/],
+  ['read', /읽|독서|펴|공부|글을 보|책을 보/],
+  ['give', /주|건네|선물|나눠|전해/],
+  ['hide', /숨|몰래|피해|숨어/],
+  ['run', /달리|뛰|도망|급히|쫓|달아나/],
+  ['look', /발견|바라|찾|살펴|올려다|만나|듣|구경/],
+  ['sit', /앉|쉬|기다|휴식/],
 ]
-
-function animalsFrom(text: string): AnimalKind[] {
-  const result = ANIMAL_RULES
-    .filter(rule => rule.pattern.test(text))
-    .map(rule => rule.kind)
-
-  // "동물들이"처럼 종류가 특정되지 않은 경우
-  if (result.length === 0 && /동물|짐승/.test(text)) {
-    return ['rabbit', 'dog', 'cat']
-  }
-
-  return [...new Set(result)].slice(0, 5)
-}
-
-function animalIcon(kind: AnimalKind): string {
-  return ANIMAL_RULES.find(rule => rule.kind === kind)?.icon ?? '🐾'
-}
-
-/* --------------------------------------------------
- * 행동
- * -------------------------------------------------- */
 
 function actionFrom(text: string): Action {
-  if (has(text, /잠들|잠을 자|꿈을 꾸|누워|잠자/)) return 'sleep'
-  if (has(text, /춤|노래|파티|축제|공연/)) return 'dance'
-  if (has(text, /싸우|맞서|공격|전투|물리치|이겨/)) return 'fight'
-  if (has(text, /들고|메고|옮기|가방|상자를 들|운반/)) return 'carry'
-  if (has(text, /가리키|손짓|알려|보여 줘|가리켜/)) return 'point'
-  if (has(text, /읽|독서|펴|공부|글을 보/)) return 'read'
-  if (has(text, /건네|선물하|나눠|주었|주고|전해/)) return 'give'
-  if (has(text, /숨|몰래|피해/)) return 'hide'
-  if (has(text, /달리|뛰|도망|급히|쫓/)) return 'run'
-  if (has(text, /발견|바라|찾|살펴|올려다|만나|듣|구경/)) return 'look'
-  if (has(text, /앉|쉬|기다/)) return 'sit'
+  const rule = ACTION_RULES.find(([, pattern]) =>
+    matches(text, pattern),
+  )
 
-  return 'walk'
+  return rule?.[0] ?? 'walk'
 }
 
-/* --------------------------------------------------
- * 감정
- * -------------------------------------------------- */
+/* =========================================================
+ * Mood detection
+ * ======================================================= */
+
+const MOOD_RULES: Array<[Mood, RegExp]> = [
+  ['angry', /화나|분노|미워|짜증|화가/],
+  ['happy', /기뻐|웃|축하|행복|즐거|환호|신나|기쁜/],
+  ['sad', /슬프|울|외로|눈물|아쉬|걱정|속상/],
+  ['surprised', /놀라|깜짝|무서|두려|위험|겁|놀람/],
+  ['brave', /용기|결심|맞서|구하|이겨|당당/],
+]
 
 function moodFrom(text: string): Mood {
-  if (has(text, /화나|분노|미워|짜증|화가/)) return 'angry'
-  if (has(text, /기뻐|웃|축하|행복|즐거|환호|신나/)) return 'happy'
-  if (has(text, /슬프|울|외로|눈물|아쉬|걱정/)) return 'sad'
-  if (has(text, /놀라|깜짝|무서|두려|위험|겁/)) return 'surprised'
-  if (has(text, /용기|결심|맞서|구하|이겨/)) return 'brave'
+  const rule = MOOD_RULES.find(([, pattern]) =>
+    matches(text, pattern),
+  )
 
-  return 'normal'
+  return rule?.[0] ?? 'normal'
 }
 
-/* --------------------------------------------------
- * 인물 컴포넌트
- * -------------------------------------------------- */
+/* =========================================================
+ * Animal detection
+ * ======================================================= */
+
+const ANIMAL_RULES: Array<[Animal, RegExp]> = [
+  ['cat', /고양이|냥이|야옹/],
+  ['dog', /강아지|개|멍멍/],
+  ['rabbit', /토끼|깡총/],
+  ['fox', /여우/],
+  ['bear', /곰|곰돌이/],
+  ['panda', /판다/],
+  ['lion', /사자/],
+  ['tiger', /호랑이/],
+  ['elephant', /코끼리/],
+  ['giraffe', /기린/],
+  ['monkey', /원숭이/],
+  ['frog', /개구리/],
+  ['penguin', /펭귄/],
+  ['owl', /부엉이|올빼미/],
+  ['deer', /사슴/],
+  ['wolf', /늑대/],
+  ['squirrel', /다람쥐/],
+  ['hedgehog', /고슴도치/],
+  ['cow', /소/],
+  ['pig', /돼지/],
+  ['sheep', /양/],
+  ['chicken', /닭|병아리/],
+  ['horse', /말/],
+  ['duck', /오리/],
+]
+
+const ANIMAL_ICONS: Record<Animal, string> = {
+  cat: '🐱',
+  dog: '🐶',
+  rabbit: '🐰',
+  fox: '🦊',
+  bear: '🐻',
+  panda: '🐼',
+  lion: '🦁',
+  tiger: '🐯',
+  elephant: '🐘',
+  giraffe: '🦒',
+  monkey: '🐵',
+  frog: '🐸',
+  penguin: '🐧',
+  owl: '🦉',
+  deer: '🦌',
+  wolf: '🐺',
+  squirrel: '🐿️',
+  hedgehog: '🦔',
+  cow: '🐄',
+  pig: '🐷',
+  sheep: '🐑',
+  chicken: '🐔',
+  horse: '🐴',
+  duck: '🦆',
+  none: '',
+}
+
+function animalFrom(text: string): Animal {
+  const rule = ANIMAL_RULES.find(([, pattern]) =>
+    matches(text, pattern),
+  )
+
+  return rule?.[0] ?? 'none'
+}
+
+/* =========================================================
+ * Atmosphere
+ * ======================================================= */
+
+function Atmosphere({ text }: { text: string }) {
+  const night = matches(text, /밤|별|달|어둠/)
+  const morning = matches(text, /아침|해돋|새벽/)
+  const sunset = matches(text, /노을|해질|저녁/)
+  const rain = matches(text, /비|빗물|장마|폭풍/)
+  const snow = matches(text, /눈|겨울|눈송이|눈보라/)
+  const wind = matches(text, /바람|흩날|날리|태풍/)
+  const cloud = matches(text, /구름|흐린|흐림/)
+
+  return (
+    <div
+      className={[
+        'scene-atmosphere',
+        night && 'is-night',
+        morning && 'is-morning',
+        sunset && 'is-sunset',
+        rain && 'is-rainy',
+        snow && 'is-snowy',
+        cloud && 'is-cloudy',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {night && (
+        <>
+          <span className="story-moon">🌙</span>
+          <span className="story-stars">✨⭐🌟</span>
+        </>
+      )}
+
+      {morning && <span className="story-sun">🌅</span>}
+      {rain && <div className="story-rain">🌧️</div>}
+      {snow && <div className="story-snow">❄️</div>}
+      {wind && <div className="story-wind">🍃</div>}
+    </div>
+  )
+}
+
+/* =========================================================
+ * Person
+ * ======================================================= */
+
+const CHARACTER_ICONS: Record<Character, string> = {
+  girl: '👧',
+  boy: '👦',
+  mother: '👩',
+  father: '👨',
+  grandmother: '👵',
+  grandfather: '👴',
+  teacher: '🧑‍🏫',
+  doctor: '🧑‍⚕️',
+  knight: '🛡️',
+  king: '🤴',
+  queen: '👸',
+  wizard: '🧙',
+  pair: '🧒',
+  none: '',
+}
 
 function Person({
   character,
   action,
   mood,
-  index,
+  side = 'center',
 }: {
   character: Character
   action: Action
   mood: Mood
-  index: number
+  side?: Direction
 }) {
-  const rule = CHARACTER_RULES.find(item => item.kind === character)
-
   const moodEmoji =
     mood === 'happy'
       ? '✨'
@@ -294,7 +367,7 @@ function Person({
 
   return (
     <div
-      className={`story-person character-${character} action-${action} mood-${mood} person-index-${index}`}
+className={`story-person character-${character} action-${action} mood-${mood}`}
     >
       {moodEmoji && (
         <span className="person-mood-badge">
@@ -302,96 +375,106 @@ function Person({
         </span>
       )}
 
-      <span className="person-character-icon">
-        {rule?.icon ?? '🙂'}
+      <span
+        className="person-character-icon"
+        aria-hidden="true"
+      >
+        {CHARACTER_ICONS[character]}
       </span>
 
-      <span className="person-shadow" />
+      {/* 기존 CSS 캐릭터가 있다면 계속 사용할 수 있도록 유지 */}
+      <i className="person-avatar" aria-hidden="true">
+        <b className="person-head">
+          <b className="person-face" />
+          <b className="person-hair" />
+        </b>
+
+        <b className="person-body">
+          <b className="person-torso" />
+          <b className="person-arm left-arm" />
+          <b className="person-arm right-arm" />
+        </b>
+
+        <b className="person-legs">
+          <b className="person-leg left-leg" />
+          <b className="person-leg right-leg" />
+        </b>
+      </i>
     </div>
   )
 }
 
-/* --------------------------------------------------
- * 동물 컴포넌트
- * -------------------------------------------------- */
-
-function Animal({
-  kind,
-  index,
-}: {
-  kind: AnimalKind
-  index: number
-}) {
-  return (
-    <span
-      className={`story-animal animal-${kind} animal-index-${index}`}
-      title={kind}
-    >
-      {animalIcon(kind)}
-    </span>
-  )
-}
-
-/* --------------------------------------------------
- * 농장 장면
- * -------------------------------------------------- */
+/* =========================================================
+ * Farm Scene
+ * ======================================================= */
 
 function FarmScene({ text }: { text: string }) {
-  const ruler = has(text, /주인|인간.*얼굴|탐욕|부려먹/)
-  const oppress = has(text, /억압|희생|팔려|괴롭|강요|힘들/)
-  const celebrate = has(text, /기뻐|축하|몰아내|자유|환호/)
+  const ruler = matches(text, /주인|인간.*얼굴|탐욕|부려먹/)
+  const oppressed = matches(
+    text,
+    /억압|희생|팔려|괴롭|강요|힘들/,
+  )
+  const celebrate = matches(
+    text,
+    /기뻐|축하|몰아내|자유|환호/,
+  )
 
   const moment = ruler
     ? 'ruler'
-    : oppress
+    : oppressed
       ? 'oppress'
       : celebrate
         ? 'celebrate'
         : 'calm'
 
-  const animals =
-    animalsFrom(text).length > 0
-      ? animalsFrom(text)
-      : ['cow', 'sheep', 'chicken']
-
   return (
     <div className={`farm-scene farm-${moment}`}>
       <div className="farm-bg-layer">
         <i className="farm-barn">🛖</i>
-        <i className="farm-fence">🪵 🪵 🪵</i>
+        <i className="farm-fence">🪵🪵🪵🪵</i>
         <i className="farm-hill" />
       </div>
 
       <div className="farm-animal-layer">
-        {moment === 'calm' &&
-          animals.slice(0, 4).map((animal, index) => (
-            <Animal
-              key={`${animal}-${index}`}
-              kind={animal}
-              index={index}
-            />
-          ))}
+        {moment === 'calm' && (
+          <>
+            <span className="farm-animal cow">🐄</span>
+            <span className="farm-animal sheep">🐑</span>
+            <span className="farm-animal hen">🐔</span>
+            <span className="farm-animal pig">🐷</span>
+            <span className="farm-animal horse">🐴</span>
+            <span className="farm-animal duck">🦆</span>
+          </>
+        )}
 
         {moment === 'celebrate' && (
           <>
-            <span className="farm-crowd">🥳 🐮 🐖 🐓</span>
+            <span className="farm-crowd">
+              🥳 🐮 🐷 🐔 🐑 🐴
+            </span>
             <span className="farm-flag">🚩</span>
-            <span className="farm-sparkles">✨ 🎊</span>
+            <span className="farm-sparkles">✨🎊🎉</span>
           </>
         )}
 
         {moment === 'oppress' && (
           <>
-            <span className="farm-special-animal">🐴</span>
-            <span className="farm-cart">🛒</span>
+            <span className="farm-animal horse">🐴</span>
+            <span className="farm-animal cow">🐄</span>
+            <i className="farm-cart">🛒</i>
             <div className="farm-shadow-overlay" />
           </>
         )}
 
         {moment === 'ruler' && (
           <>
-            <span className="farm-boss">🐷👑</span>
-            <span className="farm-workers">👨‍🌾 🔨</span>
+            <span className="farm-animal pig-boss">
+              🐷👑
+            </span>
+            <span className="farm-workers">
+              👨‍🌾 🔨
+            </span>
+            <span className="farm-animal sheep">🐑</span>
           </>
         )}
       </div>
@@ -399,9 +482,426 @@ function FarmScene({ text }: { text: string }) {
   )
 }
 
-/* --------------------------------------------------
- * 장면 상세
- * -------------------------------------------------- */
+/* =========================================================
+ * Background
+ * ======================================================= */
+
+function SceneBackground({
+  text,
+  kind,
+}: {
+  text: string
+  kind: SceneKind
+}) {
+  const boat = matches(text, /배|항해|돛|카누/)
+  const mountain = matches(text, /산|언덕|절벽|계곡/)
+  const flower = matches(
+    text,
+    /꽃|봄|정원|꽃밭|나비|장미|튤립/,
+  )
+  const rainbow = matches(text, /무지개/)
+  const vehicle = matches(
+    text,
+    /자동차|버스|기차|자전거|비행기|택시/,
+  )
+
+  return (
+    <div className="scene-bg">
+      {kind === 'farm' && (
+        <FarmScene text={text} />
+      )}
+
+      {kind === 'forest' && (
+        <>
+          <i className="story-tree left">🌲</i>
+          <i className="story-tree center">🌳</i>
+          <i className="story-tree right">🌲</i>
+          <i className="story-path" />
+        </>
+      )}
+
+      {kind === 'garden' && (
+        <>
+          <i className="story-tree left">🌳</i>
+          <i className="story-tree right">🌳</i>
+          <span className="story-flowerbed">
+            🌸🌻🌹🌷🦋
+          </span>
+        </>
+      )}
+
+      {kind === 'sea' && (
+        <>
+          <i className="story-island">🏝️</i>
+          <div className="story-waves">🌊🌊🌊</div>
+          {boat && (
+            <span className="story-boat">⛵</span>
+          )}
+        </>
+      )}
+
+      {kind === 'school' && (
+        <>
+          <i className="story-school">🏫</i>
+          <i className="story-ground" />
+        </>
+      )}
+
+      {kind === 'home' && (
+        <>
+          <i className="story-home">🏠</i>
+          <span className="story-window">🪟</span>
+        </>
+      )}
+
+      {kind === 'city' && (
+        <>
+          <div className="story-city">
+            🏢🏣🏬🏢
+          </div>
+          <i className="story-crosswalk" />
+          {vehicle && (
+            <span className="story-city-car">
+              🚗
+            </span>
+          )}
+        </>
+      )}
+
+      {kind === 'castle' && (
+        <>
+          <i className="story-castle">🏰</i>
+          <span className="story-castle-flag">
+            🚩
+          </span>
+        </>
+      )}
+
+      {kind === 'space' && (
+        <>
+          <i className="story-planet">🪐</i>
+          <span className="story-rocket">🚀</span>
+          <span className="story-space-star">
+            ⭐✨🌟
+          </span>
+        </>
+      )}
+
+      {kind === 'cave' && (
+        <>
+          <i className="story-cave">🕳️</i>
+          <span className="story-crystals">
+            💎✨💎
+          </span>
+        </>
+      )}
+
+      {kind === 'hospital' && (
+        <i className="story-hospital">🏥</i>
+      )}
+
+      {kind === 'market' && (
+        <>
+          <i className="story-shop">🏪</i>
+          <span className="story-awning">🎪</span>
+        </>
+      )}
+
+      {kind === 'winter' && (
+        <>
+          <span className="story-snowman">☃️</span>
+          <i className="story-pine">🌲</i>
+          <i className="story-pine second">🌲</i>
+        </>
+      )}
+
+      {kind === 'book' && (
+        <>
+          <i className="story-shelf">📚</i>
+          <i className="story-table">🛋️</i>
+        </>
+      )}
+
+      {mountain && (
+        <span className="story-mountain">⛰️</span>
+      )}
+
+      {flower && kind !== 'garden' && (
+        <span className="story-flowers">
+          💐🌷🌻
+        </span>
+      )}
+
+      {rainbow && (
+        <span className="story-rainbow">🌈</span>
+      )}
+    </div>
+  )
+}
+
+/* =========================================================
+ * Story Objects
+ * ======================================================= */
+
+function StoryObjects({
+  text,
+  kind,
+}: {
+  text: string
+  kind: SceneKind
+}) {
+  const book = matches(
+    text,
+    /책|독서|읽|동화|일기|사전/,
+  )
+
+  const letter = matches(
+    text,
+    /편지|지도|쪽지|초대장|메모/,
+  )
+
+  const key = matches(
+    text,
+    /열쇠|자물쇠/,
+  )
+
+  const treasure = matches(
+    text,
+    /보물|상자|금화|보석|다이아/,
+  )
+
+  const umbrella = matches(text, /우산/)
+  const lamp = matches(
+    text,
+    /등불|램프|불빛|촛불|손전등/,
+  )
+
+  const food = matches(
+    text,
+    /빵|케이크|사과|음식|식사|쿠키|과자|주스|아이스크림/,
+  )
+
+  const phone = matches(
+    text,
+    /전화|휴대폰|메시지|문자/,
+  )
+
+  const crown = matches(
+    text,
+    /왕관|왕|여왕|공주|왕자/,
+  )
+
+  const magic = matches(
+    text,
+    /마법|요정|주문|지팡이|마법진/,
+  )
+
+  const fire = matches(
+    text,
+    /불|화재|불꽃|모닥불|용암/,
+  )
+
+  const clock = matches(
+    text,
+    /시계|시간|약속/,
+  )
+
+  const balloon = matches(text, /풍선/)
+  const music = matches(
+    text,
+    /음악|노래|피아노|기타|연주/,
+  )
+
+  const camera = matches(
+    text,
+    /사진|카메라|촬영/,
+  )
+
+  const gift = matches(
+    text,
+    /선물|리본/,
+  )
+
+  const weapon = matches(
+    text,
+    /칼|검|방패|활|화살/,
+  )
+
+  const monster = matches(
+    text,
+    /괴물|용|마녀|유령|외계인/,
+  )
+
+  const vehicle = matches(
+    text,
+    /자동차|버스|기차|자전거|비행기|택시/,
+  )
+
+  const animal = animalFrom(text)
+
+  const character = characterFrom(text)
+  const action = actionFrom(text)
+  const mood = moodFrom(text)
+
+  return (
+    <div className="scene-objects">
+      {/* 캐릭터 */}
+      {character !== 'none' &&
+        kind !== 'farm' && (
+          <Person
+            character={character}
+            action={action}
+            mood={mood}
+            side={
+              character === 'pair'
+                ? 'left'
+                : 'center'
+            }
+          />
+        )}
+
+      {character === 'pair' &&
+        kind !== 'farm' && (
+          <Person
+            character="boy"
+            action={action}
+            mood={mood}
+            side="right"
+          />
+        )}
+
+      {/* 동물 */}
+      {animal !== 'none' &&
+        kind !== 'farm' && (
+          <span
+            className={`story-item animal animal-${animal}`}
+            title={animal}
+          >
+            {ANIMAL_ICONS[animal]}
+          </span>
+        )}
+
+      {/* 사물 */}
+      {book && (
+        <span className="story-item book">
+          📖
+        </span>
+      )}
+
+      {letter && (
+        <span className="story-item letter">
+          ✉️
+        </span>
+      )}
+
+      {key && (
+        <span className="story-item key">
+          🔑
+        </span>
+      )}
+
+      {treasure && (
+        <span className="story-item treasure">
+          💎
+        </span>
+      )}
+
+      {umbrella && (
+        <span className="story-item umbrella">
+          ☂️
+        </span>
+      )}
+
+      {lamp && (
+        <span className="story-item lamp">
+          💡
+        </span>
+      )}
+
+      {food && (
+        <span className="story-item food">
+          🍎
+        </span>
+      )}
+
+      {phone && (
+        <span className="story-item phone">
+          📱
+        </span>
+      )}
+
+      {crown && (
+        <span className="story-item crown">
+          👑
+        </span>
+      )}
+
+      {magic && (
+        <span className="story-item magic">
+          🪄✨
+        </span>
+      )}
+
+      {fire && (
+        <span className="story-item fire">
+          🔥
+        </span>
+      )}
+
+      {vehicle && (
+        <span className="story-item vehicle">
+          🚗
+        </span>
+      )}
+
+      {clock && (
+        <span className="story-item clock">
+          ⏰
+        </span>
+      )}
+
+      {balloon && (
+        <span className="story-item balloon">
+          🎈
+        </span>
+      )}
+
+      {music && (
+        <span className="story-item music">
+          🎵
+        </span>
+      )}
+
+      {camera && (
+        <span className="story-item camera">
+          📷
+        </span>
+      )}
+
+      {gift && (
+        <span className="story-item gift">
+          🎁
+        </span>
+      )}
+
+      {weapon && (
+        <span className="story-item weapon">
+          ⚔️
+        </span>
+      )}
+
+      {monster && (
+        <span className="story-item monster">
+          👾
+        </span>
+      )}
+    </div>
+  )
+}
+
+/* =========================================================
+ * Scene Details
+ * ======================================================= */
 
 function SceneDetails({
   sentence,
@@ -412,249 +912,26 @@ function SceneDetails({
 }) {
   const text = sentence.toLowerCase()
 
-  const characters = charactersFrom(text)
-  const animals = animalsFrom(text)
-
-  const action = actionFrom(text)
-  const mood = moodFrom(text)
-
-  const night = has(text, /밤|어둠/)
-  const morning = has(text, /아침|해돋|새벽/)
-  const sunset = has(text, /노을|해질|저녁/)
-  const rain = has(text, /비|빗물|장마|폭풍/)
-  const snow = has(text, /눈이|눈밭|눈사람|눈송이|겨울|스키|얼음|빙판/)
-  const wind = has(text, /바람|흩날|날리|태풍/)
-  const cloud = has(text, /구름|흐린/)
-
-  const book = has(text, /책|독서|읽|동화|일기|사전/)
-  const letter = has(text, /편지|지도|쪽지|초대장|메모/)
-  const key = has(text, /열쇠|자물쇠/)
-  const treasure = has(text, /보물|상자|금화|보석|다이아/)
-  const flower = has(text, /꽃|봄|정원|꽃밭|나비|장미|튤립/)
-  const mountain = has(text, /산|언덕|절벽|계곡/)
-  const lamp = has(text, /등불|램프|불빛|촛불|손전등/)
-  const umbrella = has(text, /우산/)
-  const boat = has(text, /배|항해|돛|카누/)
-  const food = has(text, /빵|케이크|사과|음식|식사|쿠키|과자|주스/)
-  const phone = has(text, /전화|휴대폰|메시지|문자/)
-  const crown = has(text, /왕관|여왕|국왕/)
-  const magic = has(text, /마법|요정|주문|지팡이|마법진/)
-  const fire = has(text, /불꽃|화재|모닥불|용암|불길|불이/)
-  const rainbow = has(text, /무지개/)
-  const vehicle = has(text, /자동차|버스|기차|자전거|비행기|택시/)
-  const clock = has(text, /시계|시간|약속/)
-  const balloon = has(text, /풍선/)
-  const music = has(text, /음악|노래|피아노|기타|연주/)
-  const camera = has(text, /사진|카메라/)
-  const gift = has(text, /선물|리본/)
-  const weapon = has(text, /칼|검|방패|활|화살/)
-  const monster = has(text, /괴물|용|마녀|유령|외계인/)
-
-  const empty = !sentence.trim()
-
-  const objectList = [
-    book && ['book', '📖'],
-    letter && ['letter', '✉️'],
-    key && ['key', '🔑'],
-    treasure && ['treasure', '💎'],
-    umbrella && ['umbrella', '☂️'],
-    lamp && ['lamp', '💡'],
-    food && ['food', '🍎'],
-    phone && ['phone', '📱'],
-    crown && ['crown', '👑'],
-    magic && ['magic', '🪄✨'],
-    fire && ['fire', '🔥'],
-    vehicle && ['vehicle', '🚗'],
-    clock && ['clock', '⏰'],
-    balloon && ['balloon', '🎈'],
-    music && ['music', '🎵'],
-    camera && ['camera', '📷'],
-    gift && ['gift', '🎁'],
-    weapon && ['weapon', '⚔️'],
-    monster && ['monster', '👾'],
-  ].filter(Boolean) as Array<[string, string]>
-
   return (
     <>
-      <div
-        className={[
-          'scene-atmosphere',
-          night && 'is-night',
-          morning && 'is-morning',
-          sunset && 'is-sunset',
-          rain && 'is-rainy',
-          snow && 'is-snowy',
-          cloud && 'is-cloudy',
-        ]
-          .filter(Boolean)
-          .join(' ')}
+      <Atmosphere text={text} />
+
+      <SceneBackground
+        text={text}
+        kind={kind}
       />
 
-      <div className="scene-bg">
-        {kind === 'farm' && <FarmScene text={text} />}
+      <StoryObjects
+        text={text}
+        kind={kind}
+      />
 
-        {kind === 'forest' && (
-          <>
-            <i className="story-tree left">🌲</i>
-            <i className="story-tree right">🌳</i>
-            <i className="story-path" />
-          </>
-        )}
-
-        {kind === 'garden' && (
-          <>
-            <i className="story-tree left">🌳</i>
-            <span className="story-flowerbed">🌸 🌻 🌹</span>
-          </>
-        )}
-
-        {kind === 'sea' && (
-          <>
-            <i className="story-island">🏝️</i>
-            <div className="story-waves">🌊 🌊</div>
-            {boat && <span className="story-boat">⛵</span>}
-          </>
-        )}
-
-        {kind === 'school' && (
-          <>
-            <i className="story-school">🏫</i>
-            <i className="story-ground" />
-          </>
-        )}
-
-        {kind === 'home' && (
-          <>
-            <i className="story-home">🏠</i>
-            <span className="story-window">🪟</span>
-          </>
-        )}
-
-        {kind === 'city' && (
-          <>
-            <div className="story-city">🏢 🏣 🏢</div>
-            <i className="story-crosswalk" />
-          </>
-        )}
-
-        {kind === 'castle' && (
-          <i className="story-castle">🏰</i>
-        )}
-
-        {kind === 'space' && (
-          <>
-            <i className="story-planet">🪐</i>
-            <span className="story-rocket">🚀</span>
-          </>
-        )}
-
-        {kind === 'cave' && (
-          <>
-            <i className="story-cave">🕳️</i>
-            <span className="story-crystals">💎 ✨</span>
-          </>
-        )}
-
-        {kind === 'hospital' && (
-          <i className="story-hospital">🏥</i>
-        )}
-
-        {kind === 'market' && (
-          <>
-            <i className="story-shop">🏪</i>
-            <span className="story-awning">🎪</span>
-          </>
-        )}
-
-        {kind === 'winter' && (
-          <>
-            <span className="story-snowman">☃️</span>
-            <i className="story-pine">🌲</i>
-          </>
-        )}
-
-        {kind === 'book' && (
-          <>
-            <i className="story-shelf">📚</i>
-            <i className="story-table">🛋️</i>
-          </>
-        )}
-
-        {mountain && (
-          <span className="story-mountain">⛰️</span>
-        )}
-
-        {night && (
-          <>
-            <span className="story-moon">🌙</span>
-            <span className="story-stars">✨ ⭐</span>
-          </>
-        )}
-
-        {morning && (
-          <span className="story-sun">🌅</span>
-        )}
-
-        {rain && (
-          <div className="story-rain">🌧️</div>
-        )}
-
-        {snow && (
-          <div className="story-snow">❄️ ❄️ ❄️</div>
-        )}
-
-        {wind && (
-          <div className="story-wind">🍃 🍃</div>
-        )}
-
-        {rainbow && (
-          <span className="story-rainbow">🌈</span>
-        )}
-      </div>
-
-      <div className="scene-character-layer">
-        {characters.map((character, index) => (
-          <Person
-            key={`${character}-${index}`}
-            character={character}
-            action={action}
-            mood={mood}
-            index={index}
-          />
-        ))}
-      </div>
-
-      <div className="scene-animal-layer">
-        {kind !== 'farm' &&
-          animals.map((animal, index) => (
-            <Animal
-              key={`${animal}-${index}`}
-              kind={animal}
-              index={index}
-            />
-          ))}
-      </div>
-
-      <div className="scene-objects">
-        {flower && kind !== 'garden' && (
-          <span className="story-object flower">
-            💐
-          </span>
-        )}
-
-        {objectList.map(([objectKind, icon], index) => (
-          <span
-            key={`${objectKind}-${index}`}
-            className={`story-object object-${objectKind} object-index-${index}`}
-          >
-            {icon}
-          </span>
-        ))}
-      </div>
-
-      {empty && (
+      {emptyText(sentence) && (
         <div className="scene-empty">
-          <span className="scene-empty-icon">🎨</span>
+          <span className="scene-empty-icon">
+            🎨
+          </span>
+
           <span className="scene-empty-text">
             이야기를 적으면 그림이 완성돼요
           </span>
@@ -664,9 +941,9 @@ function SceneDetails({
   )
 }
 
-/* --------------------------------------------------
- * 메인 패널
- * -------------------------------------------------- */
+/* =========================================================
+ * Main Component
+ * ======================================================= */
 
 export default function ComicPanel({
   panel,
@@ -677,21 +954,25 @@ export default function ComicPanel({
 }: Props) {
   const kind = sceneKind(panel.sentence)
 
+  const className = [
+    'comic-panel',
+    compact && 'compact',
+    active && 'is-active',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
     <button
       type="button"
-      className={[
-        'comic-panel',
-        compact && 'compact',
-        active && 'is-active',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+      className={className}
       onClick={onClick}
       aria-label={`${panel.stage} 단계 입력란으로 이동`}
     >
       <span className="panel-label">
-        <strong>{panel.stage}</strong> · {subtitle}
+        <strong>{panel.stage}</strong>
+        {' · '}
+        {subtitle}
       </span>
 
       <div className={`scene scene-${kind}`}>
@@ -702,7 +983,8 @@ export default function ComicPanel({
       </div>
 
       <div className="speech-bubble">
-        {panel.sentence || '이야기 문장을 적어 주세요.'}
+        {panel.sentence ||
+          '이야기 문장을 적어 주세요.'}
       </div>
     </button>
   )
