@@ -137,31 +137,42 @@ function sceneKind(text: string): SceneKind {
  * ======================================================= */
 
 const CHARACTER_RULES: Array<[Character, RegExp]> = [
-  [
-    'pair',
-    /친구들|아이들|두 사람|둘이|함께|소녀와|소년과|엄마와|아빠와|형제|자매|남매/,
-  ],
   ['grandmother', /할머니|외할머니|할머님/],
   ['grandfather', /할아버지|외할아버지|할아버님/],
   ['mother', /엄마|어머니|어머님|맘/],
-  ['father', /아빠|아버지|아버님|아빠와/],
+  ['father', /아빠|아버지|아버님/],
   ['teacher', /선생님|교사|담임/],
   ['doctor', /의사|간호사|의료진/],
   ['knight', /기사|전사|용사/],
-  ['king', /왕|국왕/],
+  ['king', /국왕|왕/],
   ['queen', /여왕|왕비/],
   ['wizard', /마법사|현자|마법소녀|마녀/],
   ['girl', /소녀|여자아이|그녀|공주|딸/],
-  ['boy', /소년|남자아이|그|왕자|아들/],
-  ['girl', /아이|주인공|사람|친구/],
+  ['boy', /소년|남자아이|왕자|아들/],
 ]
 
-function characterFrom(text: string): Character {
-  const rule = CHARACTER_RULES.find(([, pattern]) =>
-    matches(text, pattern),
-  )
+function charactersFrom(text: string): Character[] {
+  const found: Character[] = []
 
-  return rule?.[0] ?? 'none'
+  for (const [character, pattern] of CHARACTER_RULES) {
+    if (matches(text, pattern) && !found.includes(character)) {
+      found.push(character)
+    }
+  }
+
+  // 역할명이 없더라도 '두 사람/아이들/친구들'처럼 복수 인물이
+  // 명확한 경우에는 서로 다른 두 인물로 표현한다.
+  if (found.length === 0 && /친구들|아이들|두 사람|둘이|함께/.test(text)) {
+    found.push('girl', 'boy')
+  } else if (found.length === 0 && /아이|주인공|사람|친구/.test(text)) {
+    found.push('girl')
+  }
+
+  return found.slice(0, 4)
+}
+
+function characterFrom(text: string): Character {
+  return charactersFrom(text)[0] ?? 'none'
 }
 
 /* =========================================================
@@ -345,12 +356,14 @@ function Person({
   character,
   action,
   mood,
-  side = 'center',
+  index = 0,
+  total = 1,
 }: {
   character: Character
   action: Action
   mood: Mood
-  side?: Direction
+  index?: number
+  total?: number
 }) {
   const moodEmoji =
     mood === 'happy'
@@ -365,9 +378,30 @@ function Person({
               ? '🔥'
               : ''
 
+  const layouts: Record<number, number[]> = {
+    1: [50],
+    2: [30, 70],
+    3: [18, 50, 82],
+    4: [11, 37, 63, 89],
+  }
+  const positions = layouts[Math.min(total, 4)] ?? layouts[4]
+  const left = positions[Math.min(index, positions.length - 1)]
+  const scale = total >= 4 ? 0.78 : total === 3 ? 0.86 : total === 2 ? 0.94 : 1
+
   return (
     <div
-className={`story-person character-${character} action-${action} mood-${mood}`}
+      className={`story-person character-${character} action-${action} mood-${mood}`}
+      style={{
+        position: 'absolute',
+        left: `${left}%`,
+        bottom: total >= 3 ? '9%' : '7%',
+        transform: `translateX(-50%) scale(${scale})`,
+        transformOrigin: 'bottom center',
+        zIndex: 30 + index,
+        width: 'clamp(76px, 17%, 150px)',
+        minWidth: 0,
+        pointerEvents: 'none',
+      }}
     >
       {moodEmoji && (
         <span className="person-mood-badge">
@@ -382,19 +416,16 @@ className={`story-person character-${character} action-${action} mood-${mood}`}
         {CHARACTER_ICONS[character]}
       </span>
 
-      {/* 기존 CSS 캐릭터가 있다면 계속 사용할 수 있도록 유지 */}
       <i className="person-avatar" aria-hidden="true">
         <b className="person-head">
           <b className="person-face" />
           <b className="person-hair" />
         </b>
-
         <b className="person-body">
           <b className="person-torso" />
           <b className="person-arm left-arm" />
           <b className="person-arm right-arm" />
         </b>
-
         <b className="person-legs">
           <b className="person-leg left-leg" />
           <b className="person-leg right-leg" />
@@ -739,36 +770,27 @@ function StoryObjects({
 
   const animal = animalFrom(text)
 
-  const character = characterFrom(text)
+  const characters = charactersFrom(text)
   const action = actionFrom(text)
   const mood = moodFrom(text)
 
   return (
     <div className="scene-objects">
-      {/* 캐릭터 */}
-      {character !== 'none' &&
-        kind !== 'farm' && (
-          <Person
-            character={character}
-            action={action}
-            mood={mood}
-            side={
-              character === 'pair'
-                ? 'left'
-                : 'center'
-            }
-          />
-        )}
-
-      {character === 'pair' &&
-        kind !== 'farm' && (
-          <Person
-            character="boy"
-            action={action}
-            mood={mood}
-            side="right"
-          />
-        )}
+      {/* 캐릭터: 배경/소품과 분리된 전용 레이어에 배치 */}
+      {kind !== 'farm' && characters.length > 0 && (
+        <div className="scene-character-layer" aria-hidden="true">
+          {characters.map((character, index) => (
+            <Person
+              key={`${character}-${index}`}
+              character={character}
+              action={action}
+              mood={mood}
+              index={index}
+              total={characters.length}
+            />
+          ))}
+        </div>
+      )}
 
       {/* 동물 */}
       {animal !== 'none' &&
@@ -941,6 +963,103 @@ function SceneDetails({
   )
 }
 
+const COMIC_PANEL_STYLES = `
+.comic-panel .scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.comic-panel .scene-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.comic-panel .scene-atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.comic-panel .scene-objects {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.comic-panel .scene-character-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.comic-panel .scene-character-layer .story-person {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-direction: column;
+  height: 58%;
+  max-height: 220px;
+  margin: 0;
+  line-height: 1;
+}
+
+.comic-panel .scene-character-layer .person-character-icon {
+  display: block;
+  font-size: clamp(44px, 8vw, 82px);
+  line-height: 1;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.18));
+  white-space: nowrap;
+}
+
+.comic-panel .scene-character-layer .person-avatar {
+  display: none;
+}
+
+.comic-panel .scene-character-layer .person-mood-badge {
+  position: absolute;
+  top: -8px;
+  right: 8%;
+  font-size: clamp(18px, 3vw, 30px);
+  z-index: 2;
+}
+
+.comic-panel .scene-character-layer .story-person.character-mother .person-character-icon,
+.comic-panel .scene-character-layer .story-person.character-father .person-character-icon,
+.comic-panel .scene-character-layer .story-person.character-grandmother .person-character-icon,
+.comic-panel .scene-character-layer .story-person.character-grandfather .person-character-icon {
+  font-size: clamp(48px, 8.5vw, 88px);
+}
+
+.comic-panel .scene-character-layer .story-person.character-knight .person-character-icon,
+.comic-panel .scene-character-layer .story-person.character-king .person-character-icon,
+.comic-panel .scene-character-layer .story-person.character-queen .person-character-icon,
+.comic-panel .scene-character-layer .story-person.character-wizard .person-character-icon {
+  font-size: clamp(48px, 8.5vw, 88px);
+}
+
+.comic-panel .scene-objects > .story-item {
+  z-index: 15;
+  pointer-events: none;
+}
+
+@media (max-width: 520px) {
+  .comic-panel .scene-character-layer .story-person {
+    height: 52%;
+    max-height: 170px;
+  }
+
+  .comic-panel .scene-character-layer .person-character-icon {
+    font-size: clamp(38px, 13vw, 64px);
+  }
+}
+`
+
 /* =========================================================
  * Main Component
  * ======================================================= */
@@ -976,6 +1095,7 @@ export default function ComicPanel({
       </span>
 
       <div className={`scene scene-${kind}`}>
+        <style>{COMIC_PANEL_STYLES}</style>
         <SceneDetails
           sentence={panel.sentence}
           kind={kind}
