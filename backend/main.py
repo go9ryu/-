@@ -9,11 +9,11 @@ from pydantic import BaseModel, Field
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+app = FastAPI()
+
 @app.post("/api/save")
 def save_report(data: BookReportSchema):
     return {"message": "success"}
-    
-app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
