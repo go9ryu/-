@@ -210,6 +210,7 @@ const details = detailedElements(sentence);
       <i className="story-foreground" />
     </>
   );
+}
 
 export default function ComicPanel({ panel, subtitle, active, compact, onClick }: Props) {
   const kind = sceneKind(panel.sentence)
