@@ -989,4 +989,3 @@ export default function ComicPanel({
     </button>
   )
 }
-```
