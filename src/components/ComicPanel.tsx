@@ -115,5 +115,8 @@ function SceneDetails({ sentence, kind }: { sentence: string; kind: SceneKind })
 
 export default function ComicPanel({ panel, subtitle, active, compact, onClick }: Props) {
   const kind = sceneKind(panel.sentence)
-  return <button type="button" className={`comic-panel ${compact ? 'compact' : ''} ${active ? 'is-active' : ''}`} onClick={onClick} aria-label={`${panel.stage} 단계 입력란으로 이동`}><span className="panel-label"><b>{panel.stage}</b> · {subtitle}</span><div className={`scene scene-${kind}`}><SceneDetails sentence={panel.sentence} kind={kind} /></div><div className="speech-bubble">{panel.sentence || '이야기 문장을 적어 주세요.'}</div></button>
-}
+  const isClimax = panel.stage === '전' // '전' 단계일 때 극적 연출 적용
+
+  return (
+    
+      **{panel.stage}** · {subtitle}
