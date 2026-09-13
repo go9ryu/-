@@ -1,4 +1,3 @@
-```tsx
 import { Panel } from '../types'
 
 type Props = {
