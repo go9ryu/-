@@ -71,154 +71,49 @@ function FarmScene({ text }: { text: string }) {
   return <div className={`farm-scene farm-${moment}`}><i className="farm-barn" /><i className="farm-fence">╱╱╱╱</i><i className="farm-hill" />{moment === 'calm' && <><i className="farm-cow">♟</i><i className="farm-sheep">●</i><i className="farm-hen">⌁</i></>}{moment === 'celebrate' && <><i className="farm-crowd">♟ ♟ ♟</i><i className="farm-flag">⚑</i><i className="farm-sparkles">✦ ✧</i></>}{moment === 'oppress' && <><i className="farm-horse">♞</i><i className="farm-cart" /><i className="farm-shadow" /></>}{moment === 'ruler' && <><i className="farm-pig">●</i><i className="farm-pig-face">▰</i><i className="farm-cane">╱</i><i className="farm-workers">♟ ♟</i></>}</div>
 }
 
-
-function detailedElements(text: string) {
-  const has = (words: RegExp) => words.test(text.toLowerCase());
-
-  return {
-    // 날씨/시간 상세
-    isNight: has(/밤|별|달|어둠|새벽/),
-    isMorning: has(/아침|해돋이|새벽/),
-    isSunset: has(/노을|해질녘|저녁/),
-    isRainy: has(/비|빗물|소나기|폭풍/),
-    isSnowy: has(/눈|겨울|눈송이/),
-    isWindy: has(/바람|흩날리|태풍/),
-    isCloudy: has(/구름|흐린/),
-
-    // 사물 상세
-    hasBook: has(/책|독서|서재/),
-    hasLetter: has(/편지|지도|쪽지|메모/),
-    hasKey: has(/열쇠|자물쇠/),
-    hasTreasure: has(/보물|상자|금화/),
-    hasFlower: has(/꽃|봄|꽃밭|장미/),
-    hasMountain: has(/산|언덕|절벽/),
-    hasLamp: has(/등불|램프|촛불/),
-    hasUmbrella: has(/우산/),
-    hasBoat: has(/배|항해|카누/),
-    hasFood: has(/빵|케이크|음식|식사/),
-    hasPhone: has(/전화|휴대폰|메시지/),
-    hasCrown: has(/왕관|왕|여왕/),
-    hasMagic: has(/마법|지팡이|요정/),
-    hasFire: has(/불|모닥불|용암/),
-    hasRainbow: has(/무지개/),
-    hasClock: has(/시계|시간/),
-    hasMusic: has(/음악|노래|악기/),
-    hasCamera: has(/사진|카메라/),
-    hasGift: has(/선물|리본/),
-    hasWeapon: has(/칼|검|방패|활/),
-    hasMonster: has(/괴물|용|드래곤/),
-
-    // 동물 상세
-    hasCat: has(/고양이/),
-    hasDog: has(/강아지|개/),
-    hasRabbit: has(/토끼/),
-    hasFox: has(/여우/),
-    hasBird: has(/새/),
-    hasFish: has(/물고기/),
-  };
-}
-
 function SceneDetails({ sentence, kind }: { sentence: string; kind: SceneKind }) {
-const details = detailedElements(sentence);
-
-  return (
-    <>
-      {/* 배경/날씨 (상세화) */}
-      <div className={`scene-atmosphere 
-        ${details.isNight ? 'is-night' : ''} 
-        ${details.isMorning ? 'is-morning' : ''} 
-        ${details.isSunset ? 'is-sunset' : ''} 
-        ${details.isRainy ? 'is-rainy' : ''} 
-        ${details.isSnowy ? 'is-snowy' : ''} 
-        ${details.isCloudy ? 'is-cloudy' : ''}`} 
-      />
-      
-      {/* 장소 배경 (기본 제공 코드) */}
-      {kind === 'farm' && <FarmScene text={text} />}
-      {kind === 'forest' && <><i className="story-tree tree-back-left" /><i className="story-tree tree-back-right" /><i className="story-path" /></>}
-      {kind === 'garden' && <><i className="story-tree tree-back-left" /><i className="story-flowerbed">✿ ✿ ✿</i><i className="story-path" /></>}
-      {kind === 'sea' && <><i className="story-island" /><i className="story-waves">〰 〰 〰</i>{details.hasBoat && <i className="story-boat" />}</>}
-      {kind === 'school' && <><i className="story-school"><b>BOOK</b></i><i className="story-ground" /></>}
-      {kind === 'home' && <><i className="story-home" /><i className="story-window">✦</i></>}
-      {kind === 'city' && <><i className="story-city"><b /><b /><b /></i><i className="story-crosswalk">═ ═ ═</i></>}
-      {kind === 'castle' && <i className="story-castle">♜</i>}
-      {kind === 'space' && <><i className="story-planet" /><i className="story-rocket">➤</i></>}
-      {kind === 'cave' && <><i className="story-cave" /><i className="story-crystals">◆ ◆</i></>}
-      {kind === 'hospital' && <><i className="story-hospital">✚</i><i className="story-ground" /></>}
-      {kind === 'market' && <><i className="story-shop"><b>SHOP</b></i><i className="story-awning">▰▰▰</i></>}
-      {kind === 'winter' && <><i className="story-snowman">☃</i><i className="story-pine">♠</i></>}
-      {kind === 'book' && <><i className="story-shelf"><b /><b /><b /></i><i className="story-table" /></>}
-
-      {/* 날씨/자연물 상세 */}
-      {details.hasMountain && <i className="story-mountain" />}
-      {details.isNight && <><i className="story-moon" /><i className="story-stars">✦ · ✧</i></>}
-      {details.isMorning && <i className="story-sun">☀</i>}
-      {details.isRainy && <i className="story-rain">╲ ╲ ╲</i>}
-      {details.isSnowy && <i className="story-snow">✦ · ✦</i>}
-      {details.isWindy && <i className="story-wind">⌁ ⌁</i>}
-      {details.hasRainbow && <i className="story-rainbow">⌒</i>}
-      {details.hasFlower && kind !== 'garden' && <i className="story-flowers">✿ ✿</i>}
-
-      {/* 인물 (상세화) */}
-      {character !== 'none' && kind !== 'farm' && (
-        <Person character={character} action={action} mood={mood} side={character === 'pair' ? 'left' : 'center'} />
-      )}
-      {character === 'pair' && kind !== 'farm' && (
-        <Person character="boy" action={action} mood={mood} side="right" />
-      )}
-
-      {/* 사물/소품 상세 */}
-      {details.hasBook && <i className="story-book"><b>책</b></i>}
-      {details.hasLetter && <i className="story-letter">✉</i>}
-      {details.hasKey && <i className="story-key">⚿</i>}
-      {details.hasTreasure && <i className="story-treasure">▣</i>}
-      
-      {/* 동물 상세 */}
-      {(details.hasCat || details.hasDog || details.hasRabbit || details.hasFox || details.hasBird || details.hasFish) && kind !== 'farm' && (
-        <i className="story-animal">
-          {details.hasCat ? '⌁' : 
-           details.hasDog ? '♧' : 
-           details.hasRabbit ? '♙' : 
-           details.hasFox ? '♜' : 
-           details.hasBird ? '⌇' : 
-           details.hasFish ? '〰' : '♟'}
-        </i>
-      )}
-
-      {/* 기타 소품 상세 */}
-      {details.hasUmbrella && <i className="story-umbrella">☂</i>}
-      {details.hasLamp && <i className="story-lamp">✦</i>}
-      {details.hasFood && <i className="story-food">●</i>}
-      {details.hasPhone && <i className="story-phone">▯</i>}
-      {details.hasCrown && <i className="story-crown">♕</i>}
-      {details.hasMagic && <i className="story-magic">✧</i>}
-      {details.hasFire && <i className="story-fire">♨</i>}
-      {details.hasClock && <i className="story-clock">◷</i>}
-      {details.hasMusic && <i className="story-music">♫</i>}
-      {details.hasCamera && <i className="story-camera">▣</i>}
-      {details.hasGift && <i className="story-gift">▣</i>}
-      {details.hasWeapon && <i className="story-weapon">⚔</i>}
-      {details.hasMonster && <i className="story-monster">♛</i>}
-
-      {/* 빈 칸 안내 (기본 제공 코드) */}
-      {empty && (
-        <>
-          <i className="scene-empty-book">▤</i>
-          <span className="scene-empty-text">이야기 문장을 적으면 그림이 채워져요</span>
-        </>
-      )}
-      <i className="story-foreground" />
-    </>
-  );
+  const text = sentence.toLowerCase()
+  const character = characterFrom(text)
+  const action = actionFrom(text)
+  const mood = moodFrom(text)
+  const night = has(text, /밤|별|달|어둠|새벽/); const morning = has(text, /아침|해돋|새벽/); const sunset = has(text, /노을|해질|저녁/)
+  const rain = has(text, /비|빗물|장마|폭풍/); const snow = has(text, /눈|겨울|눈송이/); const wind = has(text, /바람|흩날|날리|태풍/)
+  const book = has(text, /책|독서|읽|동화|일기|사전/); const letter = has(text, /편지|지도|쪽지|초대장|메모/); const key = has(text, /열쇠|자물쇠/)
+  const treasure = has(text, /보물|상자|금화|보석|다이아/); const flower = has(text, /꽃|봄|정원|꽃밭|나비|장미|튤립/)
+  const mountain = has(text, /산|언덕|절벽|계곡/); const lamp = has(text, /등불|램프|불빛|촛불|손전등/); const umbrella = has(text, /우산/)
+  const boat = has(text, /배|항해|돛|카누/); const food = has(text, /빵|케이크|사과|음식|식사|쿠키|과자|주스/)
+  const phone = has(text, /전화|휴대폰|메시지|문자/); const crown = has(text, /왕관|왕|여왕|공주|왕자/); const magic = has(text, /마법|요정|주문|지팡이|마법진/)
+  const fire = has(text, /불|화재|불꽃|모닥불|용암/); const rainbow = has(text, /무지개/); const cloud = has(text, /구름|흐린/)
+  const vehicle = has(text, /자동차|버스|기차|자전거|비행기|택시/); const clock = has(text, /시계|시간|약속/); const balloon = has(text, /풍선/)
+  const music = has(text, /음악|노래|피아노|기타|연주/); const camera = has(text, /사진|카메라/); const gift = has(text, /선물|리본/)
+  const weapon = has(text, /칼|검|방패|활|화살/); const monster = has(text, /괴물|용|마녀|유령|외계인/); const pet = has(text, /고양이|강아지|토끼|여우|늑대|곰|사자|호랑이|새|물고기|동물/)
+  const animalIcon = has(text, /고양이/) ? '⌁' : has(text, /강아지|개/) ? '♧' : has(text, /토끼/) ? '♙' : has(text, /여우/) ? '♜' : has(text, /새/) ? '⌇' : has(text, /물고기/) ? '〰' : '♟'
+  const empty = !sentence.trim()
+  return <>
+    <div className={`scene-atmosphere ${night ? 'is-night' : ''} ${morning ? 'is-morning' : ''} ${sunset ? 'is-sunset' : ''} ${rain ? 'is-rainy' : ''} ${snow ? 'is-snowy' : ''} ${cloud ? 'is-cloudy' : ''}`} />
+    {kind === 'farm' && <FarmScene text={text} />}
+    {kind === 'forest' && <><i className="story-tree tree-back-left" /><i className="story-tree tree-back-right" /><i className="story-path" /></>}
+    {kind === 'garden' && <><i className="story-tree tree-back-left" /><i className="story-flowerbed">✿ ✿ ✿</i><i className="story-path" /></>}
+    {kind === 'sea' && <><i className="story-island" /><i className="story-waves">〰 〰 〰</i>{boat && <i className="story-boat" />}</>}
+    {kind === 'school' && <><i className="story-school"><b>BOOK</b></i><i className="story-ground" /></>}
+    {kind === 'home' && <><i className="story-home" /><i className="story-window">✦</i></>}
+    {kind === 'city' && <><i className="story-city"><b /><b /><b /></i><i className="story-crosswalk">═ ═ ═</i></>}
+    {kind === 'castle' && <i className="story-castle">♜</i>}
+    {kind === 'space' && <><i className="story-planet" /><i className="story-rocket">➤</i></>}
+    {kind === 'cave' && <><i className="story-cave" /><i className="story-crystals">◆ ◆</i></>}
+    {kind === 'hospital' && <><i className="story-hospital">✚</i><i className="story-ground" /></>}
+    {kind === 'market' && <><i className="story-shop"><b>SHOP</b></i><i className="story-awning">▰▰▰</i></>}
+    {kind === 'winter' && <><i className="story-snowman">☃</i><i className="story-pine">♠</i></>}
+    {kind === 'book' && <><i className="story-shelf"><b /><b /><b /></i><i className="story-table" /></>}
+    {mountain && <i className="story-mountain" />}{night && <><i className="story-moon" /><i className="story-stars">✦ · ✧</i></>}{morning && <i className="story-sun">☀</i>}{rain && <i className="story-rain">╲ ╲ ╲</i>}{snow && <i className="story-snow">✦ · ✦</i>}{wind && <i className="story-wind">⌁ ⌁</i>}{rainbow && <i className="story-rainbow">⌒</i>}
+    {flower && kind !== 'garden' && <i className="story-flowers">✿ ✿</i>}{character !== 'none' && kind !== 'farm' && <Person character={character} action={action} mood={mood} side={character === 'pair' ? 'left' : 'center'} />}{character === 'pair' && kind !== 'farm' && <Person character="boy" action={action} mood={mood} side="right" />}
+    {book && <i className="story-book"><b>책</b></i>}{letter && <i className="story-letter">✉</i>}{key && <i className="story-key">⚿</i>}{treasure && <i className="story-treasure">▣</i>}{pet && kind !== 'farm' && <i className="story-animal">{animalIcon}</i>}{umbrella && <i className="story-umbrella">☂</i>}{lamp && <i className="story-lamp">✦</i>}{food && <i className="story-food">●</i>}{phone && <i className="story-phone">▯</i>}{crown && <i className="story-crown">♕</i>}{magic && <i className="story-magic">✧</i>}{fire && <i className="story-fire">♨</i>}
+    {vehicle && <i className="story-vehicle">▱</i>}{clock && <i className="story-clock">◷</i>}{balloon && <i className="story-balloon">●</i>}{music && <i className="story-music">♫</i>}{camera && <i className="story-camera">▣</i>}{gift && <i className="story-gift">▣</i>}{weapon && <i className="story-weapon">⚔</i>}{monster && <i className="story-monster">♛</i>}
+    {empty && <><i className="scene-empty-book">▤</i><span className="scene-empty-text">이야기 문장을 적으면 그림이 채워져요</span></>}<i className="story-foreground" />
+  </>
 }
 
 export default function ComicPanel({ panel, subtitle, active, compact, onClick }: Props) {
   const kind = sceneKind(panel.sentence)
-  const isClimax = panel.stage === '전' // '전' 단계일 때 극적 연출 적용
-
-return (
-  <>
-    <strong>{panel.stage}</strong> · {subtitle}
-  </>
-  );
+  return <button type="button" className={`comic-panel ${compact ? 'compact' : ''} ${active ? 'is-active' : ''}`} onClick={onClick} aria-label={`${panel.stage} 단계 입력란으로 이동`}><span className="panel-label"><b>{panel.stage}</b> · {subtitle}</span><div className={`scene scene-${kind}`}><SceneDetails sentence={panel.sentence} kind={kind} /></div><div className="speech-bubble">{panel.sentence || '이야기 문장을 적어 주세요.'}</div></button>
 }
