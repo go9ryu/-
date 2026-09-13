@@ -220,4 +220,5 @@ return (
   <>
     <strong>{panel.stage}</strong> · {subtitle}
   </>
-);
+  );
+}
