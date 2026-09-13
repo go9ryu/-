@@ -367,12 +367,7 @@ function Person({
 
   return (
     <div
-className={[
-  'story-person',
-  `character-${character}`,
-  `action-${action}`,
-  `mood-${mood}`,
-].join(' ')}
+className={`story-person character-${character} action-${action} mood-${mood}`}
     >
       {moodEmoji && (
         <span className="person-mood-badge">
